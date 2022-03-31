@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css?family=Rubik:400,700|Crimson+Text:400,400i" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/webcamjs/1.0.26/webcam.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <title>Créer Compte</title>
+    <style>
+    .register{
+        background: -webkit-linear-gradient(left, #3931af, #00c6ff);
+        margin-top: 3%;
+        padding: 3%;
+        }
+        .register-left{
+            text-align: center;
+            color: #fff;
+            margin-top: 4%;
+        }
+        .register-left input{
+            border: none;
+            border-radius: 1.5rem;
+            padding: 2%;
+            width: 60%;
+            background: #f8f9fa;
+            font-weight: bold;
+            color: #383d41;
+            margin-top: 30%;
+            margin-bottom: 3%;
+            cursor: pointer;
+        }
+        .register-right{
+            background: #f8f9fa;
+            border-top-left-radius: 10% 50%;
+            border-bottom-left-radius: 10% 50%;
+        }
+        .register-left img{
+            margin-top: 15%;
+            margin-bottom: 5%;
+            width: 25%;
+            -webkit-animation: mover 2s infinite  alternate;
+            animation: mover 1s infinite  alternate;
+        }
+        @-webkit-keyframes mover {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-20px); }
+        }
+        @keyframes mover {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-20px); }
+        }
+        .register-left p{
+            font-weight: lighter;
+            padding: 12%;
+            margin-top: -9%;
+        }
+        .register .register-form{
+            padding: 10%;
+            margin-top: 10%;
+        }
+        .btnRegister{
+            float: right;
+            margin-top: 10%;
+            border: none;
+            border-radius: 1.5rem;
+            padding: 2%;
+            background: #0062cc;
+            color: #fff;
+            font-weight: 600;
+            width: 50%;
+            cursor: pointer;
+        }
+        .register .nav-tabs{
+            margin-top: 3%;
+            border: none;
+            background: #0062cc;
+            border-radius: 1.5rem;
+            width: 28%;
+            float: right;
+        }
+        .register .nav-tabs .nav-link{
+            padding: 2%;
+            height: 34px;
+            font-weight: 600;
+            color: #fff;
+            border-top-right-radius: 1.5rem;
+            border-bottom-right-radius: 1.5rem;
+        }
+        .register .nav-tabs .nav-link:hover{
+            border: none;
+        }
+        .register .nav-tabs .nav-link.active{
+            width: 100px;
+            color: #0062cc;
+            border: 2px solid #0062cc;
+            border-top-left-radius: 1.5rem;
+            border-bottom-left-radius: 1.5rem;
+        }
+        .register-heading{
+            text-align: center;
+            margin-top: 8%;
+            margin-bottom: -15%;
+            color: #495057;
+        }
+        .popup-hide { 
+            position: fixed;
+            padding: 10px;
+            top: 55%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            transition: 150ms ease-in-out;
+            border: solid 1px #ededed;
+            border-radius: 5px;
+            z-index: 10;
+            background-color: white;
+            width: 600px;
+            max-width: 80%;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+    </style>
+    <script>
+        function ShowCamera(divId) {
+            var cameraPopups = document.getElementsByClassName("popup-hide");
+            for(var i=0; i<cameraPopups.length; i++){
+                HideCamera(cameraPopups[i].id);
+            }
+            var popup=document.getElementById(divId);
+            popup.style.transform = 'translate(-50%, -50%) scale(1)';   
+        }
+
+        function HideCamera(divId) {
+            var popup=document.getElementById(divId);       
+            popup.style.transform = 'translate(-50%, -50%) scale(0)';
+            Webcam.reset();
+        }
+
+        function LoadCamera(cameraId){
+            ShowCamera(cameraId + "_popup");
+            Webcam.set({
+                width: 490,
+                height: 390,
+                image_format: 'jpeg',
+                jpeg_quality: 90
+            });
+            Webcam.attach("#" + cameraId);
+        }
+
+        function TakeSnapshot(imgInput) {
+            Webcam.snap( function(data_uri) {
+                $("#" + imgInput).val(data_uri);
+                document.getElementById('saved_' + imgInput).innerHTML = '<br><img src="'+data_uri+'" style="height:200px;width:300px">';
+            });
+        }
+        
+        function SignUp(accountType){
+            $("#" + accountType + "_sign_up_form").off("submit");
+            $("#" + accountType + "_sign_up_form").on("submit", function (e) {
+                var dataString = new FormData(this);
+                dataString.append("action", "signup");
+                
+                $.ajax({
+                    type: "POST",
+                    url: "../Controllers/AccountController.php",
+                    data: dataString,
+                    contentType: false,
+                    processData: false,
+                    success: function (data) {
+                        data = JSON.parse(data);
+                        if(data["signed_up"] === true || data["already_loggedin"] === true){
+                            window.location.replace(data["redirect_url"]);
+                        } else{
+                            for(section in data){
+                                $("#"+section).html(data[section]);
+                            }
+                        }
+                    }
+                });
+                e.preventDefault();
+            });
+        }
+    </script>
+</head>
+<body>
+    <div class="container register">
+        <div class="row">
+            <div class="col-md-3 register-left">
+                <img src="https://image.ibb.co/n7oTvU/logo_white.png" alt=""/>
+                <h3>Bienvenue</h3>
+                <a class="nav-link" href="SignInView.html">Se Connecter</a>
+            </div>
+            <div class="popup-hide" id="card_camera_popup">
+                <button class="btn btn-primary" onclick="HideCamera('card_camera_popup')">Fermer</button>      
+                <div id="card_camera"></div>
+                <div class="row">
+                    <div class="col">
+                        <div class="d-grid">
+                            <button class="btn btn-primary btn-block" id="save_card_img" onclick="TakeSnapshot('card_img')">Enregistrer Photo</button>
+                        </div>
+                    </div>
+                </div>   
+            </div> 
+            <div class="popup-hide" id="teacher_camera_popup">
+                <button class="btn btn-primary" onclick="HideCamera('teacher_camera_popup')">Fermer</button>      
+                <div id="teacher_camera"></div>
+                <div class="row">
+                    <div class="col">
+                        <div class="d-grid">
+                            <button class="btn btn-primary btn-block" id="save_teacher_img" onclick="TakeSnapshot('teacher_img')">Enregistrer Photo</button>
+                        </div>
+                    </div>
+                </div>   
+            </div>  
+            <div class="col-md-9 register-right">
+                <ul class="nav nav-tabs nav-justified" id="myTab" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">Etudiant</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="profile" aria-selected="false">Enseignant</a>
+                    </li>
+                </ul>
+                <div class="tab-content" id="myTabContent">
+                    <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+                        <h3 class="register-heading">En tant qu'étudiant</h3>
+                        <form id="student_sign_up_form" method="post">
+                            <input type="hidden" name="account_type" value="student">
+                            <div class="row register-form">
+                                <div class="col-md-9">
+                                    <div class="form-group">
+                                        <input type="email" class="form-control" name="email" placeholder="Email"/>
+                                        <span class="help-block" id="student_email_error"></span>
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="text" class="form-control" name="username" placeholder="Nom d'utlisateur"/>
+                                        <span class="help-block" id="student_username_error"></span>
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="password" class="form-control" name="password" placeholder="Mot de passe"/>
+                                        <span class="help-block" id="student_password_error"></span>
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="password" class="form-control" name="cpass"  placeholder="Confirmer mot de passe"/>
+                                        <span class="help-block" id="student_password_error"></span>
+                                    </div>
+                                    <span class="help-block" id="student_requests_error"></span>
+                                </div>
+                                <button type="submit" class="btnRegister" onclick="SignUp('student')">Créer</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="tab-pane fade show" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+                        <h3  class="register-heading">En tant qu'enseignant</h3>
+                        <form id="teacher_sign_up_form" method="post" enctype='multipart/form-data'>
+                            <input type="hidden" name="account_type" value="teacher">
+                            <div class="row register-form">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <input type="text" class="form-control" name="last_name" placeholder="Nom"/>
+                                        <span class="help-block" id="last_name_error"></span>
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="email" class="form-control" name="email" placeholder="Email"/>
+                                        <span class="help-block" id="teacher_email_error"></span>
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="password" class="form-control" name="password" placeholder="Mot de passe"/>
+                                        <span class="help-block" id="teachet_password_error"></span>
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="tel" class="form-control" name="phone" placeholder="Téléphone"/>
+                                        <span class="help-block" id="phone_error"></span>
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="button" value="Prendre photo de votre carte d'identité" onclick="LoadCamera('card_camera')">
+                                        <span class="help-block" id="card_img_error"></span>
+                                        <input type="hidden" id="card_img" name="card_img" class="image-tag">
+                                        <div class="saved_imgs" id="saved_card_img"></div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <input type="text" class="form-control" name="first_name" placeholder="Pénom"/>
+                                        <span class="help-block" id="first_name_error"></span>
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="text" class="form-control" name="username" placeholder="Nom d'utlisateur"/>
+                                        <span class="help-block" id="teacher_username_error"></span>
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="password" class="form-control" name="cpass"  placeholder="Confirmer mot de passe"/>
+                                        <span class="help-block" id="teacher_password_error"></span>
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="text" class="form-control" name="cv_link" placeholder="Lien de votre CV"/>
+                                        <span class="help-block" id="cv_link_error"></span>
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="button" value="Prendre photo de vous" onclick="LoadCamera('teacher_camera')"><br>
+                                        <span class="help-block" id="teacher_img_error"></span>
+                                        <input type="hidden" id="teacher_img" name="teacher_img" class="image-tag">
+                                        <div class="saved_imgs" id="saved_teacher_img"></div>
+                                    </div>
+                                    <span class="help-block" id="teacher_requests_error"></span>
+                                </div>
+                                <button type="submit" class="btnRegister" onclick="SignUp('teacher')">Créer</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>			                            
+</body>
+</html>
