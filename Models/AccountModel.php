@@ -2,7 +2,7 @@
 
 class AccountModel{
     private $dbconnector;
-    private $dbconn;
+    protected $dbconn;
     public $auth;
 
     public function __construct(){
