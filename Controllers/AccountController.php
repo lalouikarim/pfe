@@ -21,6 +21,7 @@ class AccountController{
 
     // sign up users
     public function SignUp(){
+        $inputsAreValidated = false;
         // this array will be sent as a response to the client
         $response_array["already_loggedin"] = false;
         $response_array["signed_up"] = false;
@@ -48,6 +49,8 @@ class AccountController{
             $response_array[$accountType->value . "_username_error"] = "";
             $response_array[$accountType->value . "_password_error"] = "";
             $response_array[$accountType->value . "_requests_error"] = "";
+            $response_array["first_name_error"] = $response_array["last_name_error"] = $response_array["phone_error"] = "";
+            $response_array["cv_link_error"] = $response_array["card_img_error"] = $response_array["teacher_img_error"] = "";
 
             // ensure a valid password length
             if(strlen($password->value) < 8 || strlen($password->value) > 255){
@@ -66,17 +69,82 @@ class AccountController{
                 $response_array[$accountType->value . "_username_error"] = "Le nom d'utilisateur doit contenir juste des lettres miniscules, un _ optionel au milieu, et des numeros optionaux a la fin<br>";
             } else{
                 if($accountType->value === "teacher"){
+                    if(isset($_POST["first_name"]) && isset($_POST["last_name"]) && isset($_POST["phone"]) && isset($_POST["cv_link"]) && isset($_POST["card_img"]) && isset($_POST["teacher_img"])){
+                        // require the image model
+                        require "../Models/ImageModel.php";
 
+                        // create image models
+                        $cardImgInput = new Input($_POST["card_img"]);
+                        $cardImgInput->Sanitize();
+                        $cardImg = new ImageModel($cardImgInput->value, "IDCards");
+                        $teacherImgInput = new Input($_POST["teacher_img"]);
+                        $teacherImgInput->Sanitize();
+                        $teacherImg = new ImageModel($teacherImgInput->value, "Teachers");
+                        // validate the images
+                        if(!$cardImg->ValidateFile()){
+                            $response_array["card_img_error"] = "Veuillez choisir une photo valide de votre carte d'identité";
+                        }
+                        if(!$teacherImg->ValidateFile()){
+                            $response_array["teacher_img_error"] = "Veuillez choisir une photo valide de vous";
+                        }
+
+                        // proceed only if the images are valid
+                        if($response_array["card_img_error"] === "" && $response_array["teacher_img_error"] === ""){
+                            // sanitize the rest of the user's input
+                            $firstName = new Input($_POST["first_name"]);
+                            $firstName->Sanitize();
+                            $lastName = new Input($_POST["last_name"]);
+                            $lastName->Sanitize();
+                            $phone = new Input($_POST["phone"]);
+                            $phone->Sanitize();
+                            $cvLink = new Input($_POST["cv_link"]);
+                            $cvLink->Sanitize();
+                            
+                            // ensure a valid first name format
+                            if(!preg_match("/^[A-Z][a-z]+$/", $firstName->value)){
+                                $response_array["first_name_error"] = "Le prénom doit avoir la première lettre en majuscule et le reste en miniscule";
+                            }
+                            // ensure a valid last name format
+                            else if(!preg_match("/^[A-Z]+$/", $lastName->value)){
+                                $response_array["last_name_error"] = "Le nom doit comporter juste des lettres majuscules";
+                            }
+                            // ensure a valid phone number format
+                            else if(!preg_match("/^0[5-7]{1}[0-9]{2}(\s[0-9]{2}){3}$/", $phone->value)){
+                                $response_array["phone_error"] = "Veuillez choisir un numero de ce format: 0698 66 77 10";
+                            }
+                            // ensure a valid link format
+                            else if(!filter_var($cvLink->value, FILTER_VALIDATE_URL)){
+                                $response_array["cv_link_error"] = "Veuillez choisir un lien valide";
+                            }
+                            // all inputs were validated
+                            else{
+                                $inputsAreValidated = true;
+                            }
+                        }
+                    }
                 } else if($accountType->value === "student"){
                     $inputsAreValidated = true;
-                } else{
-                    $inputsAreValidated = false;
                 }
 
                 // sign up the user only if all inputs were validated
                 if($inputsAreValidated === true){
                     try {
+                        // register the user
                         $userId = $this->accountModel->auth->registerWithUniqueUsername($email->value, $password->value, $username->value);
+                        
+                        // if it's a teacher then store their info
+                        if($accountType->value === "teacher"){
+                            // require the teacher model
+                            require "../Models/TeacherModel.php";
+                            // create a teacher model
+                            $teacherModel = new TeacherModel();
+                            // store the images in the filesystem
+                            $cardImg->StoreFile();
+                            $teacherImg->StoreFile();
+                            // store the teacher's info (the teacher account is disabled until validated by an admin)
+                            $teacherModel->StoreTeacherInfo(array("user_id" => $userId, "sign_up_status" => 0, "first_name" => $firstName->value, "last_name" => $lastName->value, "phone" => $phone->value, "card_photo" => $cardImg->imgName, "teacher_photo" => $teacherImg->imgName, "cv_link" => $cvLink->value));
+                        }
+                        
                         // indicate the the user succuessfully signed up
                         $response_array["signed_up"] = true;
                         // redirect the user to the sign in page
