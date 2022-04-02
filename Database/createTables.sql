@@ -89,8 +89,7 @@ KEY `FK_68` (`teacher_id`),
 CONSTRAINT `FK_66` FOREIGN KEY `FK_68` (`teacher_id`) REFERENCES `teachers` (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `ratings`
-(
+CREATE TABLE IF NOT EXISTS `ratings`(
  `id`       int(10) NOT NULL AUTO_INCREMENT ,
  `user_id`  int(10) NOT NULL ,
  `offer_id` int(10) NOT NULL ,
@@ -101,4 +100,13 @@ KEY `FK_12` (`user_id`),
 CONSTRAINT `FK_10` FOREIGN KEY `FK_12` (`user_id`) REFERENCES `users` (`id`),
 KEY `FK_31` (`offer_id`),
 CONSTRAINT `FK_29` FOREIGN KEY `FK_31` (`offer_id`) REFERENCES `offers` (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `admins`(
+ `id`       int(10) NOT NULL AUTO_INCREMENT ,
+ `user_id`  int(10) NOT NULL ,
+
+PRIMARY KEY (`id`),
+KEY `FK_70` (`user_id`),
+CONSTRAINT `FK_72` FOREIGN KEY `FK_70` (`user_id`) REFERENCES `users` (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
