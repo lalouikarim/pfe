@@ -33,8 +33,16 @@ class AccountController{
         // check if the user is logged in
         if ($this->accountModel->auth->isLoggedIn()) {
             $response_array["already_loggedin"] = true;
-            // redirect the user to their panel
-            $response_array["redirect_url"] = "";
+            // set the role of the account
+            $this->accountModel->SetAccountRole($this->accountModel->auth->getEmail());
+            // redirect the user based on their role
+            if($this->accountModel->role === "teacher"){
+                $response_array["redirect_url"] = "http://localhost/pfe/Views/TeacherPanelView.html";
+            } else if($this->accountModel->role === "student"){
+                $response_array["redirect_url"] = "http://localhost/pfe";
+            } else if($this->accountModel->role === "admin"){
+                $response_array["redirect_url"] = "http://localhost/pfe/Views/AdminPanelView.html";
+            }
         } else if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["account_type"]) && isset($_POST["email"]) && isset($_POST["username"]) && isset($_POST["password"]) && isset($_POST["cpass"])){
             // sanitize the user's input
             $accountType = new Input($_POST["account_type"]);
