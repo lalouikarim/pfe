@@ -14,6 +14,9 @@ class AccountController{
             case "signup":
                 $this->SignUp();
                 break;
+            case "signin":
+                $this->SignIn();
+                break;
             default:
                 break;
         }
@@ -161,6 +164,115 @@ class AccountController{
                         $response_array[$accountType->value . "_requests_error"] = "Trop de demandes<br>";
                     }
                 }
+            }
+        }
+
+        echo json_encode($response_array);
+    }
+
+    // sign in users
+    public function SignIn(){
+        $canLogin = false;
+        // this array will be sent as a response to the client
+        $response_array["error"] = "";
+        $response_array["signed_in"] = false;
+        // don't keep the user logged in after the session ends
+        $rememberDuration = null;
+
+        // check if the user is logged in
+        if ($this->accountModel->auth->isLoggedIn()){
+            $response_array["signed_in"] = true;
+            // set the role of the account
+            $this->accountModel->SetAccountRole($this->accountModel->auth->getEmail());
+            // redirect the user based on their role
+            if($this->accountModel->role === "teacher"){
+                $response_array["redirect_url"] = "http://localhost/pfe/Views/TeacherPanelView.html";
+            } else if($this->accountModel->role === "student"){
+                $response_array["redirect_url"] = "http://localhost/pfe";
+            } else if($this->accountModel->role === "admin"){
+                $response_array["redirect_url"] = "http://localhost/pfe/Views/AdminPanelView.html";
+            }
+        } else if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["username_or_email"]) && isset($_POST["password"])){
+            // sanitize the user's input
+            $usernameOrEmail = new Input($_POST["username_or_email"]);
+            $usernameOrEmail->Sanitize();
+            $password = new Input($_POST["password"]);
+            $password->Sanitize();
+
+            try {
+                // check if the user selected the "remember me" checkbox
+                if (isset($_POST["remember_me"])){
+                    $remember_me = new Input($_POST["remember_me"]);
+                    $remember_me->Sanitize();
+                    if($remember_me->value === "on"){
+                        // keep the user logged in for one month
+                        $rememberDuration = (int) (60 * 60 * 24 * 30);
+                    }
+                }
+
+                // assign the account role
+                $this->accountModel->SetAccountRole($usernameOrEmail->value);
+
+                // if it's a teacher then check their sign up status
+                if($this->accountModel->role === "teacher"){
+                    // get the password (if found) associated to this username or email
+                    $storedPassword = $this->accountModel->getPasswordByUsernameOrEmail($usernameOrEmail->value);
+                    // verify that the provided password and the hashed one match
+                    // this is to not provide the teacher's info without the appropriate password
+                    if(password_verify($password->value, $storedPassword)){
+                        // require the teacher model
+                        require "../Models/TeacherModel.php";
+                        // create a teacher model
+                        $teacherModel = new TeacherModel();
+
+                        // allow login only to validated teachers
+                        if($teacherModel->GetTeacherStatus($usernameOrEmail->value) == 0){
+                            $response_array["error"] = "votre compte est en attente de validation par un admin";
+                        } else{
+                            $canLogin = true;
+                            // redirect the student to the teacher to their panel
+                            $response_array["redirect_url"] = "http://localhost/pfe/Views/TeacherPanelView.html";
+                        }
+                    } else{
+                        $response_array["error"] = "Votre nom d'utilisateur/email et votre mot de passe ne correspondent pas<br>";
+                    }
+                } else if($this->accountModel->role === "student"){
+                    $canLogin = true;
+                    // redirect the student to the homepage
+                    $response_array["redirect_url"] = "http://localhost/pfe";
+                } else if($this->accountModel->role === "admin"){
+                    $canLogin = true;
+                    // redirect the admin to their panel
+                    $response_array["redirect_url"] = "http://localhost/pfe/Views/AdminPanelView.html";
+                }
+
+                if($canLogin){
+                    // if the identifier appears to be an email address then login with the email
+                    if(strpos($usernameOrEmail->value, '@') !== false){
+                        $this->accountModel->auth->login($usernameOrEmail->value, $password->value, $rememberDuration);
+                    }
+                    // if the identifier appears to be a username then login with the username
+                    else{
+                        $this->accountModel->auth->loginWithUsername($usernameOrEmail->value, $password->value, $rememberDuration);
+                    }
+                    // indicate that the user has successfully signed in
+                    $response_array["signed_in"] = true;
+                }
+            }
+            catch (\Delight\Auth\InvalidEmailException $e) {
+                $response_array["error"] = "Votre nom d'utilisateur/email et votre mot de passe ne correspondent pas<br>";
+            }
+            catch (\Delight\Auth\UnknownUsernameException $e) {
+                $response_array["error"] = "Votre nom d'utilisateur/email et votre mot de passe ne correspondent pas<br>";
+            }
+            catch (\Delight\Auth\InvalidPasswordException $e) {
+                $response_array["error"] = "Votre nom d'utilisateur/email et votre mot de passe ne correspondent pas<br>";
+            }
+            catch (\Delight\Auth\AmbiguousUsernameException $e) {
+                $response_array["error"] = "Votre nom d'utilisateur/email et votre mot de passe ne correspondent pas<br>";
+            }
+            catch (\Delight\Auth\TooManyRequestsException $e) {
+                $response_array["error"] = "Trop de demandes<br>";
             }
         }
 
