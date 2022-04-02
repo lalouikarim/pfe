@@ -37,6 +37,19 @@ class AccountModel{
             $this->role = "teacher";
         }
     }
+
+    // get the password associated to a username or an email
+    public function getPasswordByUsernameOrEmail($usernameOrEmail){
+        $stmt = $this->dbconn->prepare("SELECT password FROM users WHERE username = :username_or_email OR email = :username_or_email");
+        $stmt->bindParam(":username_or_email", $usernameOrEmail);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if(empty($result)){
+            return "";
+        } else{
+            return $result[0]["password"];
+        };
+    }
 }
 
 ?>
