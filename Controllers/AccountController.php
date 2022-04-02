@@ -18,6 +18,7 @@ class AccountController{
                 $this->SignIn();
                 break;
             default:
+                $this->SignOut();
                 break;
         }
     }
@@ -277,6 +278,11 @@ class AccountController{
         }
 
         echo json_encode($response_array);
+    }
+
+    // sign out the user
+    public function SignOut(){
+        $this->accountModel->auth->logOut();
     }
 }
 
