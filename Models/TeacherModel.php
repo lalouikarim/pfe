@@ -14,6 +14,15 @@ class TeacherModel extends AccountModel{
         $stmt->bindParam(":cv_link", $columnsValues["cv_link"]);
         $stmt->execute();
     }
+
+    // get the status of a teacher's account
+    public function GetTeacherStatus($usernameOrEmail){
+        $stmt = $this->dbconn->prepare("SELECT sign_up_status FROM teachers WHERE user_id = (SELECT id FROM users WHERE username = :username_or_email OR email = :username_or_email)");
+        $stmt->bindParam(":username_or_email", $usernameOrEmail);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $result[0]["sign_up_status"];
+    }
 } 
 
 ?>
