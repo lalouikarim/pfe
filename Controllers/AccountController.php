@@ -24,7 +24,7 @@ class AccountController{
     }
 
     // sign up users
-    public function SignUp(){
+    private function SignUp(){
         $inputsAreValidated = false;
         // this array will be sent as a response to the client
         $response_array["already_loggedin"] = false;
@@ -180,7 +180,7 @@ class AccountController{
     }
 
     // sign in users
-    public function SignIn(){
+    private function SignIn(){
         $canLogin = false;
         // this array will be sent as a response to the client
         $response_array["error"] = "";
@@ -289,7 +289,7 @@ class AccountController{
     }
 
     // sign out the user
-    public function SignOut(){
+    private function SignOut(){
         $this->accountModel->auth->logOut();
     }
 }
