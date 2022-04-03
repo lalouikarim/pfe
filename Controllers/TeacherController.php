@@ -16,6 +16,9 @@ class TeacherController{
             case "add":
                 $this->AddOffer();
                 break;
+            case "viewoffers":
+                $this->ViewOffers();
+                break;
             default:
                 break;
         }
@@ -39,6 +42,119 @@ class TeacherController{
         }
 
         return false;
+    }
+
+    // view offers
+    private function ViewOffers(){
+        $response_array["valid_role"] = false;
+        $response_array["offers_html"] = "
+        <div id='home' class='container tab-pane active'><br>
+            <h3>Gestion des annonces</h3>
+            <br>";
+        // the user must be logged in and a validated teacher
+        if($this->UserHasTeacherPriveleges()){
+            $response_array["valid_role"] = true;
+            // retrieve the teacher's offers
+            $teacherOffers = $this->teacherModel->RetrieveTeacherOffers($this->teacherModel->auth->getUserId());
+            if(empty($teacherOffers["offers_list"])){
+                $response_array["offers_html"] .= "
+            <div class='card-deck'>
+                <div class='card'>
+                  <div class='card-body text-center'>
+                    <p class='card-text'>Annonces en attente de validation</p>
+                    <p><b>0</b>  Annonces</p>
+                  </div>
+                </div>
+                <div class='card'>
+                  <div class='card-body text-center'>
+                    <p class='card-text'>Annonces Validées</p>
+                    <p> <b>0</b>  Annonces</p>
+                  </div>
+                </div>
+                <div class='card'>
+                  <div class='card-body text-center'>
+                    <p class='card-text'>Annonce Refusées</p>
+                    <p> <b>0</b> Annonces</p>
+                  </div>
+                </div>
+            </div>
+            <hr>
+            <div class='offers'>";
+            } else{
+                $response_array["offers_html"] .= "
+            <div class='card-deck'>
+                <div class='card'>
+                  <div class='card-body text-center'>
+                    <p class='card-text'>Annonces en attente de validation</p>
+                    <p><b>" . $teacherOffers["offers_number"][0]["pending"] . "</b>  Annonces</p>
+                    <button class='btn btn-link' onclick=" .  '"'. "DisplayOfferCategory(0, 'Listes des annonces en attente de validation')" . '"' . ">View Details</button>
+                  </div>
+                </div>
+                <div class='card'>
+                  <div class='card-body text-center'>
+                    <p class='card-text'>Annonces Validées</p>
+                    <p> <b>" . $teacherOffers["offers_number"][0]["validated"] . "</b>  Annonces</p>
+                    <button class='btn btn-link' onclick=" .  '"'. "DisplayOfferCategory(1, 'Listes des annonces validées')" . '"' . ">View Details</button>
+                  </div>
+                </div>
+                <div class='card'>
+                  <div class='card-body text-center'>
+                    <p class='card-text'>Annonce Refusées</p>
+                    <p> <b>" . $teacherOffers["offers_number"][0]["refused"] . "</b> Annonces</p>
+                    <button class='btn btn-link' onclick=" .  '"'. "DisplayOfferCategory(2, 'Listes des annonces refusées')" . '"' . ">View Details</button>
+                  </div>
+                </div>
+            </div>
+            <hr>
+            <div class='offers'>
+                <h3 id='offers_header'>Listes des annonces en attente de validation</h3>
+                <div id='accordion'>";
+                foreach($teacherOffers["offers_list"] as $offer){
+                    $response_array["offers_html"] .= "
+                    <div class='card offers_". $offer["status"] . "'>
+                        <div class='card-header'>
+                            <a class='card-link' data-toggle='collapse' href='#collapse_offer_". $offer["id"] . "'>
+                                Annonce N° " . $offer["id"] . "
+                            </a>
+                        </div>
+                        <div id='collapse_offer_". $offer["id"] . "' class='collapse show' data-parent='#accordion'>
+                            <div class='card-body'>
+                                <div class='mycard order-card row'>
+                                    <div class='col-sm-3 address-infos'>
+                                        <h4>Location</h3>
+                                        <p>Wilaya: " . $offer["state"] . "</p>
+                                        <p>Commune: " . $offer["commune"] ."</p>
+                                    </div>
+                                    <div class='col-sm-3 studies-infos'>
+                                        <h4>Etudes</h4>
+                                        <p>Palier: " . $offer["level"] . "</p>
+                                        <p>Matière: " . $offer["subject"] . "</p>
+                                    </div>
+                                    <div class='col-sm-6 price-infos'>
+                                        <h4>Prix</h3>
+                                        <p>". $offer["price"] . " DA</p>
+                                    </div>
+                                </div>
+                            </div>";
+                    if($offer["status"] == 0){
+                        $response_array["offers_html"] .="
+                            <div class='options btn-group btn-block'>
+                                <button class='btn btn-success'>Modifier</button>
+                                <button class='btn btn-danger'>Supprimer</button>
+                            </div>";
+                    }
+                    $response_array["offers_html"] .= "
+                        </div>
+                    </div>";
+                }
+            $response_array["offers_html"] .= "
+                </div>
+            </div>
+        </div>";
+            }
+        }
+
+        return $response_array;
     }
 
     // add an offer
