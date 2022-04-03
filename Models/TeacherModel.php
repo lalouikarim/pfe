@@ -23,6 +23,51 @@ class TeacherModel extends AccountModel{
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return $result[0]["sign_up_status"];
     }
+
+    // check if an offer's details already exist
+    public function OfferDetailsExist($columnsValues){
+        $stmt = $this->dbconn->prepare("SELECT id FROM offers WHERE teacher_id = :teacher_id AND state = :state AND commune = :commune AND level = :level AND subject = :subject");
+        $stmt->bindParam(":teacher_id", $columnsValues["teacher_id"]);
+        $stmt->bindParam("state", $columnsValues["state"]);
+        $stmt->bindParam(":commune", $columnsValues["commune"]);
+        $stmt->bindParam(":level", $columnsValues["level"]);
+        $stmt->bindParam(":subject", $columnsValues["subject"]);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if(empty($result)){
+            return false;
+        } else{
+            return true;
+        }
+    }
+
+    // check if an offer's details are refused
+    public function OfferDetailsAreRefused($columnsValues){
+        $stmt = $this->dbconn->prepare("SELECT id FROM offers WHERE status = 2 AND (state = :state OR commune = :commune OR subject = :subject) LIMIT 1");
+        $stmt->bindParam("state", $columnsValues["state"]);
+        $stmt->bindParam(":commune", $columnsValues["commune"]);
+        $stmt->bindParam(":subject", $columnsValues["subject"]);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if(empty($result)){
+            return false;
+        } else{
+            return true;
+        }
+    }
+
+    // add an offer to db
+    public function AddOffer($columnsValues){
+        $stmt = $this->dbconn->prepare("INSERT INTO offers (status, teacher_id, state, commune, level, subject, price) VALUES (:status, :teacher_id, :state, :commune, :level, :subject, :price)");
+        $stmt->bindParam(":status", $columnsValues["status"]);
+        $stmt->bindParam(":teacher_id", $columnsValues["teacher_id"]);
+        $stmt->bindParam("state", $columnsValues["state"]);
+        $stmt->bindParam(":commune", $columnsValues["commune"]);
+        $stmt->bindParam(":level", $columnsValues["level"]);
+        $stmt->bindParam(":subject", $columnsValues["subject"]);
+        $stmt->bindParam(":price", $columnsValues["price"]);
+        $stmt->execute();
+    }
 } 
 
 ?>
