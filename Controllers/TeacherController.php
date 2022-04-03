@@ -224,6 +224,7 @@ class TeacherController{
                         $response_array["alert_icon"] = "success";
                         $response_array["alert_text"] = "Annonce ajoutée avec succès";
                         $response_array["danger_mode"] = false;
+                        $response_array["offers_html"] = $this->ViewOffers()["offers_html"];
                     }
                 }
             }
