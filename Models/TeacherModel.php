@@ -68,6 +68,21 @@ class TeacherModel extends AccountModel{
         $stmt->bindParam(":price", $columnsValues["price"]);
         $stmt->execute();
     }
+
+    // retrieve a teacher's offers
+    public function RetrieveTeacherOffers($teacherId){
+        // retrieve the offers
+        $stmt = $this->dbconn->prepare("SELECT * FROM offers WHERE teacher_id = :teacher_id");
+        $stmt->bindParam(":teacher_id", $teacherId);
+        $stmt->execute();
+        $offersList = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        // retrieve the offer's number of each catefory
+        $stmt = $this->dbconn->prepare("SELECT SUM(IF(status = 0, 1, 0)) AS pending, SUM(IF(status = 1, 1, 0)) AS validated, SUM(IF(status = 2, 1, 0)) AS refused FROM offers WHERE teacher_id = :teacher_id");
+        $stmt->bindParam(":teacher_id", $teacherId);
+        $stmt->execute();
+        $offersNumber = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return array("offers_list" => $offersList, "offers_number" => $offersNumber);
+    }
 } 
 
 ?>
