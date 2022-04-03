@@ -126,7 +126,17 @@ class TeacherController{
                                         <p>Commune: " . $offer["commune"] ."</p>
                                     </div>
                                     <div class='col-sm-3 studies-infos'>
-                                        <h4>Etudes</h4>
+                                        <h4>Etudes</h4>";
+                    if($offer["level"] === "primary"){
+                        $offer["level"] = "Primaire";
+                    } else if($offer["level"] === "middle"){
+                        $offer["level"] = "Moyenne";
+                    } else if($offer["level"] === "high"){
+                        $offer["level"] = "Secondaire";
+                    } else if($offer["level"] === "college"){
+                        $offer["level"] = "Universitaire";
+                    }
+                    $response_array["offers_html"] .= "
                                         <p>Palier: " . $offer["level"] . "</p>
                                         <p>Matière: " . $offer["subject"] . "</p>
                                     </div>
