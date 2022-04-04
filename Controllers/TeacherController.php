@@ -16,7 +16,10 @@ class TeacherController{
             case "add":
                 $this->AddOffer();
                 break;
-            case "viewoffers":
+            case "viewoffersnumber":
+                $this->DisplayCategoriesNumber("echo");
+                break;
+            case "displayoffercategory":
                 $this->ViewOffers();
                 break;
             default:
@@ -44,127 +47,152 @@ class TeacherController{
         return false;
     }
 
-    // view offers
-    private function ViewOffers(){
+    // display the number of offers of each category
+    private function DisplayCategoriesNumber($returnOrEcho){
         $response_array["valid_role"] = false;
-        $response_array["offers_html"] = "
-        <div id='home' class='container tab-pane active'><br>
-            <h3>Gestion des annonces</h3>
-            <br>";
+        $response_array["offers_number_html"] = "";
         // the user must be logged in and a validated teacher
         if($this->UserHasTeacherPriveleges()){
             $response_array["valid_role"] = true;
-            // retrieve the teacher's offers
-            $teacherOffers = $this->teacherModel->RetrieveTeacherOffers($this->teacherModel->auth->getUserId());
-            if(empty($teacherOffers["offers_list"])){
-                $response_array["offers_html"] .= "
+            // get the number of offers of each category
+            $offersNumber = $this->teacherModel->OfferCategoriesNumber($this->teacherModel->auth->getUserId());
+            $response_array["offers_number_html"] = "
+        <div id='home' class='container tab-pane active'><br>
+            <h3>Gestion des annonces</h3>
+            <br>
             <div class='card-deck'>
                 <div class='card'>
                   <div class='card-body text-center'>
                     <p class='card-text'>Annonces en attente de validation</p>
-                    <p><b>0</b>  Annonces</p>
+                    <p><b>" . $offersNumber[0]["pending"] . "</b>  Annonces</p>
+                    <form id='display_offers_0_form'>
+                        <button class='btn btn-link' onclick=" .  '"'. "DisplayOfferCategory(0)" . '"' . ">Voir Détails</button>
+                    </form>
                   </div>
                 </div>
                 <div class='card'>
                   <div class='card-body text-center'>
                     <p class='card-text'>Annonces Validées</p>
-                    <p> <b>0</b>  Annonces</p>
+                    <p> <b>" . $offersNumber[0]["validated"] . "</b>  Annonces</p>
+                    <form id='display_offers_1_form'>
+                        <button class='btn btn-link' onclick=" .  '"'. "DisplayOfferCategory(1)" . '"' . ">Voir Détails</button>
+                    </form>
                   </div>
                 </div>
                 <div class='card'>
                   <div class='card-body text-center'>
                     <p class='card-text'>Annonce Refusées</p>
-                    <p> <b>0</b> Annonces</p>
+                    <p> <b>" . $offersNumber[0]["refused"] . "</b> Annonces</p>
+                    <form id='display_offers_2_form'>
+                        <button class='btn btn-link' onclick=" .  '"'. "DisplayOfferCategory(2)" . '"' . ">Voir Détails</button>
+                    </form>
                   </div>
                 </div>
             </div>
             <hr>
-            <div class='offers'>";
-            } else{
-                $response_array["offers_html"] .= "
-            <div class='card-deck'>
-                <div class='card'>
-                  <div class='card-body text-center'>
-                    <p class='card-text'>Annonces en attente de validation</p>
-                    <p><b>" . $teacherOffers["offers_number"][0]["pending"] . "</b>  Annonces</p>
-                    <button class='btn btn-link' onclick=" .  '"'. "DisplayOfferCategory(0, 'Listes des annonces en attente de validation')" . '"' . ">View Details</button>
-                  </div>
-                </div>
-                <div class='card'>
-                  <div class='card-body text-center'>
-                    <p class='card-text'>Annonces Validées</p>
-                    <p> <b>" . $teacherOffers["offers_number"][0]["validated"] . "</b>  Annonces</p>
-                    <button class='btn btn-link' onclick=" .  '"'. "DisplayOfferCategory(1, 'Listes des annonces validées')" . '"' . ">View Details</button>
-                  </div>
-                </div>
-                <div class='card'>
-                  <div class='card-body text-center'>
-                    <p class='card-text'>Annonce Refusées</p>
-                    <p> <b>" . $teacherOffers["offers_number"][0]["refused"] . "</b> Annonces</p>
-                    <button class='btn btn-link' onclick=" .  '"'. "DisplayOfferCategory(2, 'Listes des annonces refusées')" . '"' . ">View Details</button>
-                  </div>
-                </div>
-            </div>
-            <hr>
-            <div class='offers'>
-                <h3 id='offers_header'>Listes des annonces en attente de validation</h3>
-                <div id='accordion'>";
-                foreach($teacherOffers["offers_list"] as $offer){
-                    $response_array["offers_html"] .= "
-                    <div class='card offers_". $offer["status"] . "'>
-                        <div class='card-header'>
-                            <a class='card-link' data-toggle='collapse' href='#collapse_offer_". $offer["id"] . "'>
-                                Annonce N° " . $offer["id"] . "
-                            </a>
-                        </div>
-                        <div id='collapse_offer_". $offer["id"] . "' class='collapse show' data-parent='#accordion'>
-                            <div class='card-body'>
-                                <div class='mycard order-card row'>
-                                    <div class='col-sm-3 address-infos'>
-                                        <h4>Location</h3>
-                                        <p>Wilaya: " . $offer["state"] . "</p>
-                                        <p>Commune: " . $offer["commune"] ."</p>
-                                    </div>
-                                    <div class='col-sm-3 studies-infos'>
-                                        <h4>Etudes</h4>";
-                    if($offer["level"] === "primary"){
-                        $offer["level"] = "Primaire";
-                    } else if($offer["level"] === "middle"){
-                        $offer["level"] = "Moyenne";
-                    } else if($offer["level"] === "high"){
-                        $offer["level"] = "Secondaire";
-                    } else if($offer["level"] === "college"){
-                        $offer["level"] = "Universitaire";
+            <div id='offers'></div>
+        </div>";
+        }
+
+        // the "return" is for displaying the new number of offers of each category
+        if($returnOrEcho === "echo"){
+            echo json_encode($response_array);
+        } else if($returnOrEcho === "return"){
+            return $response_array["offers_number_html"];
+        }
+    }
+
+    // view offers
+    private function ViewOffers(){
+        $response_array["valid_role"] = false;
+        $response_array["offers_html"] = $response_array["error"] = "";
+        if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["status"])){
+            // the user must be logged in and a validated teacher
+            if($this->UserHasTeacherPriveleges()){
+                $response_array["valid_role"] = true;
+                // sanitize the user's input
+                $status = new Input($_POST["status"]);
+                $status->Sanitize();
+                if(!preg_match("/^(0|1|2)$/", $status->value)){
+                    $response_array["error"] = "Invalid status";
+                } else{
+                    // retrieve the teacher's offers
+                    $teacherOffers = $this->teacherModel->RetrieveTeacherOffers($this->teacherModel->auth->getUserId(), $status->value);
+                    if(empty($teacherOffers)){
+                        $response_array["offers_html"] = "Pas d'annonces de cette catégorie";
+                    } else{
+                        $response_array["offers_html"] .= "
+                    <div class='offers'>";
+                    // display the literal version of the status
+                    if($status->value == 0){
+                        $statusStr = "en attente de validation";
+                    } else if($status->value == 1){
+                        $statusStr = "validées";
+                    } else if($status->value == 2){
+                        $statusStr = "refusées";
                     }
-                    $response_array["offers_html"] .= "
-                                        <p>Palier: " . $offer["level"] . "</p>
-                                        <p>Matière: " . $offer["subject"] . "</p>
-                                    </div>
-                                    <div class='col-sm-6 price-infos'>
-                                        <h4>Prix</h3>
-                                        <p>". $offer["price"] . " DA</p>
-                                    </div>
+                    $response_array["offers_html"] = "
+                        <h3 id='offers_header'>Listes des annonces " . $statusStr . "</h3>
+                        <div id='accordion'>";
+                        foreach($teacherOffers as $offer){
+                            $response_array["offers_html"] .= "
+                            <div class='card offers_". $offer["status"] . "'>
+                                <div class='card-header'>
+                                    <a class='card-link' data-toggle='collapse' href='#collapse_offer_". $offer["id"] . "'>
+                                        Annonce N° " . $offer["id"] . "
+                                    </a>
+                                </div>
+                                <div id='collapse_offer_". $offer["id"] . "' class='collapse show' data-parent='#accordion'>
+                                    <div class='card-body'>
+                                        <div class='mycard order-card row'>
+                                            <div class='col-sm-3 address-infos'>
+                                                <h4>Location</h3>
+                                                <p>Wilaya: " . $offer["state"] . "</p>
+                                                <p>Commune: " . $offer["commune"] ."</p>
+                                            </div>
+                                            <div class='col-sm-3 studies-infos'>
+                                                <h4>Etudes</h4>";
+                            if($offer["level"] === "primary"){
+                                $offer["level"] = "Primaire";
+                            } else if($offer["level"] === "middle"){
+                                $offer["level"] = "Moyenne";
+                            } else if($offer["level"] === "high"){
+                                $offer["level"] = "Secondaire";
+                            } else if($offer["level"] === "college"){
+                                $offer["level"] = "Universitaire";
+                            }
+                            $response_array["offers_html"] .= "
+                                                <p>Palier: " . $offer["level"] . "</p>
+                                                <p>Matière: " . $offer["subject"] . "</p>
+                                            </div>
+                                            <div class='col-sm-6 price-infos'>
+                                                <h4>Prix</h3>
+                                                <p>". $offer["price"] . " DA</p>
+                                            </div>
+                                        </div>
+                                    </div>";
+                            // a teacher can modify and delete pending and accepted offers
+                            if($offer["status"] == 0 || $offer["status"] == 1){
+                                $response_array["offers_html"] .="
+                                    <div class='options btn-group btn-block'>
+                                        <button class='btn btn-success'>Modifier</button>
+                                        <button class='btn btn-danger'>Supprimer</button>
+                                    </div>";
+                            }
+                            $response_array["offers_html"] .= "
                                 </div>
                             </div>";
-                    if($offer["status"] == 0){
-                        $response_array["offers_html"] .="
-                            <div class='options btn-group btn-block'>
-                                <button class='btn btn-success'>Modifier</button>
-                                <button class='btn btn-danger'>Supprimer</button>
-                            </div>";
-                    }
+                        }
                     $response_array["offers_html"] .= "
                         </div>
-                    </div>";
+                    </div>
+                </div>";
+                    }
                 }
-            $response_array["offers_html"] .= "
-                </div>
-            </div>
-        </div>";
             }
         }
 
-        return $response_array;
+        echo json_encode($response_array);
     }
 
     // add an offer
@@ -234,7 +262,8 @@ class TeacherController{
                         $response_array["alert_icon"] = "success";
                         $response_array["alert_text"] = "Annonce ajoutée avec succès";
                         $response_array["danger_mode"] = false;
-                        $response_array["offers_html"] = $this->ViewOffers()["offers_html"];
+                        // the "home" of the teacher panel should display the new number of offers of each category
+                        $response_array["offers_html"] = $this->DisplayCategoriesNumber("return");
                     }
                 }
             }
