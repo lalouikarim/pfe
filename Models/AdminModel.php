@@ -8,6 +8,16 @@ class AdminModel extends AccountModel{
         $offersNumber = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return $offersNumber;
     }
+
+    // retrieve a category's offers
+    public function RetrieveOffers($status){
+        // retrieve the offers
+        $stmt = $this->dbconn->prepare("SELECT * FROM offers WHERE status = :status");
+        $stmt->bindParam(":status", $status);
+        $stmt->execute();
+        $offersList = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $offersList;
+    }
 }
 
 ?>
