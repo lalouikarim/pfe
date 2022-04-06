@@ -18,6 +18,37 @@ class AdminModel extends AccountModel{
         $offersList = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return $offersList;
     }
+
+    // retreive the necessary offer details to send an email to the teacher
+    public function RetrieveOfferForEmail($offerId){
+        $stmt = $this->dbconn->prepare("SELECT users.email, offers.state, offers.commune, offers.level, offers.subject FROM offers INNER JOIN teachers ON offers.teacher_id = teachers.id INNER JOIN users ON teachers.user_id = users.id WHERE offers.id = :offer_id");
+        $stmt->bindParam(":offer_id", $offerId);
+        $stmt->execute();
+        $teacherEmail = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $teacherEmail;
+    }
+
+    // check if an offer has a given status
+    public function OfferHasStatus($offerId, $status){
+        $stmt = $this->dbconn->prepare("SELECT id FROM offers WHERE id = :id AND status = :status");
+        $stmt->bindParam(":id", $offerId);
+        $stmt->bindParam(":status", $status);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if(empty($result)){
+            return false;
+        } else{
+            return true;
+        }
+    }
+
+    // change the status of an offer
+    public function ChangeOfferStatus($offerId, $status){
+        $stmt = $this->dbconn->prepare("UPDATE offers SET status = :status WHERE id = :id");
+        $stmt->bindParam(":status", $status);
+        $stmt->bindParam(":id", $offerId);
+        $stmt->execute();
+    }
 }
 
 ?>

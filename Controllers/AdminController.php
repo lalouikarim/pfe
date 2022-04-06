@@ -15,10 +15,13 @@ class AdminController{
     public function PerformAction($action){
         switch($action){
             case "viewoffersnumber":
-                $this->DisplayCategoriesNumber();
+                $this->DisplayCategoriesNumber("echo");
                 break;
             case "displayoffercategory":
                 $this->ViewOffers();
+                break;
+            case "validate":
+                $this->ValidateOffer();
                 break;
             default:
                 break;
@@ -43,7 +46,7 @@ class AdminController{
     }
 
     // display the number of offers of each category
-    private function DisplayCategoriesNumber(){
+    private function DisplayCategoriesNumber($returnOrEcho){
         //if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST[""]))
         $response_array["valid_role"] = false;
         $response_array["offers_number_html"] = "";
@@ -90,7 +93,12 @@ class AdminController{
         </div>";
         }
 
-        echo json_encode($response_array);
+        // the "return" is for displaying the new number of offers of each category
+        if($returnOrEcho === "echo"){
+            echo json_encode($response_array);
+        } else if($returnOrEcho === "return"){
+            return $response_array["offers_number_html"];
+        }
     }
 
     // view offers
@@ -193,7 +201,9 @@ class AdminController{
                             if($offer["status"] == 0){
                                 $response_array["offers_html"] .="
                                 <div class='options btn-group btn-block'>
-                                    <button class='btn btn-success'>Valider</button>
+                                    <form id='validate_offer_" . $offer["id"] . "_form'class='btn btn-success'>
+                                        <button class='btn btn-success' onclick=" . '"' . "ValidateOffers('validate', " . $offer["id"] . ')"' . ">Valider</button>
+                                    </form>
                                     <button class='btn btn-danger'>Refuser</button>
                                 </div>";
                             }
@@ -221,6 +231,69 @@ class AdminController{
                     $response_array["offers_html"] .= "
                 </div>
             </div>";
+                    }
+                }
+            }
+        }
+
+        echo json_encode($response_array);
+    }
+
+    // validate an offer
+    private function ValidateOffer(){
+        $response_array["valid_role"] = false;
+        $response_array["danger_mode"] = true;
+        $response_array["alert_title"] = "Valider Annonce";
+        $response_array["alert_text"] = $response_array["alert_icon"] = $response_array["error"] = "";
+        if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["offer_id"])){
+            // the user must be logged in and a validated admin
+            if($this->UserHasAdminPriveleges()){
+                $response_array["valid_role"] = true;
+                // sanitize the user's input
+                $offerId = new Input($_POST["offer_id"]);
+                $offerId->Sanitize();
+                // ensure a valid offer id
+                if(!preg_match("/^(0|[1-9][0-9]*)$/", $offerId->value)){
+                    $response_array["error"] = "Invalid input";
+                } else{
+                    // make sure that the offer exists and is indeed in a pending state
+                    if($this->adminModel->OfferHasStatus($offerId->value, 0)){
+                        // update the status of the offer
+                        $this->adminModel->ChangeOfferStatus($offerId->value, 1);
+                        $response_array["alert_text"] = "Annonce validée avec succés";
+                        $response_array["alert_icon"] = "success";
+                        $response_array["danger_mode"] = false;
+                        // display the new number of offers of each category
+                        $response_array["offers_number_html"] = $this->DisplayCategoriesNumber("return");
+
+                        // get the necessary details of the offer to send an email to the teacher
+                        $offerDetails = $this->adminModel->RetrieveOfferForEmail($offerId->value);
+                        // send an email to the teacher
+                        if(!empty($offerDetails)){
+                            if($offerDetails[0]["level"] === "primary"){
+                                $offerDetails[0]["level"] = "Primaire";
+                            } else if($offerDetails[0]["level"] === "middle"){
+                                $offerDetails[0]["level"] = "Moyenne";
+                            } else if($offerDetails[0]["level"] === "high"){
+                                $offerDetails[0]["level"] = "Secondaire";
+                            } else if($offerDetails[0]["level"] === "college"){
+                                $offerDetails[0]["level"] = "Universitaire";
+                            }
+                            
+                            $to = $offerDetails[0]["email"];
+                            $subject = "Validation de votre annonce des cours particuliers";
+                            $message = "Féliciations! Cette annonce des cours particuliers a été validée:
+                            Wilaya: " . $offerDetails[0]["state"] . "
+                            Commune: " . $offerDetails[0]["commune"] . "
+                            Palier: " . $offerDetails[0]["level"] . "
+                            Matière: " . $offerDetails[0]["subject"];
+                            $headers = 'From:emailprogrammingtest@gmail.com' . "\r\n"; 
+                            // send the verification email to the user
+                            mail($to, $subject, $message, $headers);
+                        }
+                    } else{
+                        $response_array["alert_text"] = "L'annonce soit n'existe pas soit elle est déja validée ou refusée";
+                        $response_array["alert_icon"] = "warning";
                     }
                 }
             }
