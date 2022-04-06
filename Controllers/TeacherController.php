@@ -54,8 +54,10 @@ class TeacherController{
         // the user must be logged in and a validated teacher
         if($this->UserHasTeacherPriveleges()){
             $response_array["valid_role"] = true;
+            // get the teacher id
+            $teacherId = $this->teacherModel->GetTeacherId($this->teacherModel->auth->getUserId());
             // get the number of offers of each category
-            $offersNumber = $this->teacherModel->OfferCategoriesNumber($this->teacherModel->auth->getUserId());
+            $offersNumber = $this->teacherModel->OfferCategoriesNumber($teacherId[0]["id"]);
             $response_array["offers_number_html"] = "
         <div id='home' class='container tab-pane active'><br>
             <h3>Gestion des annonces</h3>
@@ -116,8 +118,10 @@ class TeacherController{
                 if(!preg_match("/^(0|1|2)$/", $status->value)){
                     $response_array["error"] = "Invalid status";
                 } else{
+                    // get the teacher id
+                    $teacherId = $this->teacherModel->GetTeacherId($this->teacherModel->auth->getUserId());
                     // retrieve the teacher's offers
-                    $teacherOffers = $this->teacherModel->RetrieveTeacherOffers($this->teacherModel->auth->getUserId(), $status->value);
+                    $teacherOffers = $this->teacherModel->RetrieveTeacherOffers($teacherId[0]["id"], $status->value);
                     if(empty($teacherOffers)){
                         $response_array["offers_html"] = "Pas d'annonces de cette catégorie";
                     } else{
@@ -254,7 +258,10 @@ class TeacherController{
                         $response_array["alert_text"] = "Il y a déjà une annonce refusée avec ces détails. Veuillez spécifier d'autres détails";
                         $response_array["danger_mode"] = true;
                     } else{
-                        $this->teacherModel->AddOffer(array("status" => 0, "teacher_id" => $this->teacherModel->auth->getUserId(), "state" => $state->value, "commune" => $commune->value, "level" => $level->value, "subject" => $subject->value, "price" => $price->value));
+                        // get the teacher id
+                        $teacherId = $this->teacherModel->GetTeacherId($this->teacherModel->auth->getUserId());
+                        // add the offer
+                        $this->teacherModel->AddOffer(array("status" => 0, "teacher_id" => $teacherId[0]["id"], "state" => $state->value, "commune" => $commune->value, "level" => $level->value, "subject" => $subject->value, "price" => $price->value));
                         // indicate that the offer was added
                         $response_array["display_alert"] = true;
                         $response_array["alert_title"] = "Ajouter Annonce";

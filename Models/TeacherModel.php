@@ -56,6 +56,15 @@ class TeacherModel extends AccountModel{
         }
     }
 
+    // get the teacher id
+    public function GetTeacherId($userId){
+        $stmt = $this->dbconn->prepare("SELECT id FROM teachers WHERE user_id = :user_id");
+        $stmt->bindParam(":user_id", $userId);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $result;
+    }
+
     // add an offer to db
     public function AddOffer($columnsValues){
         $stmt = $this->dbconn->prepare("INSERT INTO offers (status, teacher_id, state, commune, level, subject, price) VALUES (:status, :teacher_id, :state, :commune, :level, :subject, :price)");
