@@ -171,14 +171,73 @@ class AdminController{
                             </div>
                             <div id='collapse_offer_". $offer["id"] . "' class='collapse show' data-parent='#accordion'>
                                 <div class='card-body'>
-                                    <div class='mycard order-card row'>
+                                    <div class='mycard order-card row'>";
+                            // get the offer's teacher info
+                            $teacherInfo = $this->adminModel->RetrieveOfferTeacherInfo($offer["id"]);
+                            if(!empty($teacherInfo)){
+                                // display the teacher's info
+                                $response_array["offers_html"] .= "
+                                        <div class='col-sm-6 list-infos'>
+                                            <h4>Enseignant</h4>
+                                            <div class='products-list'>
+                                                <table class='table table-hover'>
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Propriété</th>
+                                                            <th>Valeur</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td>Nom</td>
+                                                            <td>" . $teacherInfo[0]["last_name"] . "</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Prénom</td>
+                                                            <td>" . $teacherInfo[0]["first_name"] . "</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Email</td>
+                                                            <td>" . $teacherInfo[0]["email"] . "</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Nom D'utilisateur</td>
+                                                            <td>" . $teacherInfo[0]["username"] . "</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Téléphone</td>
+                                                            <td>" . $teacherInfo[0]["phone"] . "</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Lien de CV</td>
+                                                            <td><a href='" . $teacherInfo[0]["cv_link"] . "' target='_blank'>Cliquez ici</a></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Carte d'identité</td>
+                                                            <td><button class='btn btn-link' onclick=" . '"' ."showpopup('card_img_" . $offer["id"] . "')" . '"' . ">Voir image</button></td>
+                                                            <div class='popup-hide' id='card_img_" .  $offer["id"] . "'> 
+                                                                <button class='btn btn-primary' id='card_img_hidepopup_" . $offer["id"] . "' onclick=" . '"' . "hidepopup('card_img_" .  $offer["id"] . "')" . '"' . ">&times;</button>
+                                                                <img class='card-img-top' src='../Images/IDCards/" . md5($teacherInfo[0]["card_photo"]) .".jpeg' alt='Card Img' style='height:200px'>
+                                                            </div>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Photo</td>
+                                                            <td><button class='btn btn-link' onclick=" . '"' ."showpopup('teacher_img_" . $offer["id"] . "')" . '"' . ">Voir image</button></td>
+                                                            <div class='popup-hide' id='teacher_img_" .  $offer["id"] . "'> 
+                                                                <button class='btn btn-primary' id='teacher_img_hidepopup_" . $offer["id"] . "' onclick=" . '"' . "hidepopup('teacher_img_" .  $offer["id"] . "')" . '"' . ">&times;</button>
+                                                                <img class='card-img-top' src='../Images/Teachers/" . md5($teacherInfo[0]["teacher_photo"]) .".jpeg' alt='Teacher Img' style='height:200px'>
+                                                            </div>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>";
+                            }
+                            $response_array["offers_html"] .="
                                         <div class='col-sm-3 address-infos'>
-                                            <h4>Location</h3>
+                                            <h4>Séance</h3>
                                             <p>Wilaya: " . $offer["state"] . "</p>
-                                            <p>Commune: " . $offer["commune"] ."</p>
-                                        </div>
-                                        <div class='col-sm-3 studies-infos'>
-                                            <h4>Etudes</h4>";
+                                            <p>Commune: " . $offer["commune"] ."</p>";
                             if($offer["level"] === "primary"){
                                 $offer["level"] = "Primaire";
                             } else if($offer["level"] === "middle"){
@@ -191,10 +250,7 @@ class AdminController{
                             $response_array["offers_html"] .= "
                                             <p>Palier: " . $offer["level"] . "</p>
                                             <p>Matière: " . $offer["subject"] . "</p>
-                                        </div>
-                                        <div class='col-sm-6 price-infos'>
-                                            <h4>Prix</h3>
-                                            <p>". $offer["price"] . " DA</p>
+                                            <p>Prix: " . $offer["price"] . " DA
                                         </div>
                                     </div>
                                 </div>";
