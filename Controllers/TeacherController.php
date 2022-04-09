@@ -242,24 +242,17 @@ class TeacherController{
                 else if(!preg_match("/^[1-9][0-9]+$/", $price->value)){
                     $response_array["errors"]["price_error"] = "Veuillez spécifier un prix valide<br>";
                 } else{
+                    // get the teacher id
+                    $teacherId = $this->teacherModel->GetTeacherId($this->teacherModel->auth->getUserId());
+
                     // check if the teacher already added an offer with these details
-                    if($this->teacherModel->OfferDetailsExist(array("teacher_id" => $this->teacherModel->auth->getUserId(), "state" => $state->value, "commune" => $commune->value, "level" => $level->value, "subject" => $subject->value))){
+                    if($this->teacherModel->OfferDetailsExist(array("teacher_id" => $teacherId[0]["id"], "state" => $state->value, "commune" => $commune->value, "level" => $level->value, "subject" => $subject->value))){
                         $response_array["display_alert"] = true;
                         $response_array["alert_title"] = "Ajouter Annonce";
                         $response_array["alert_icon"] = "warning";
                         $response_array["alert_text"] = "Vous avez déja une annonce avec ces détails";
                         $response_array["danger_mode"] = true;
-                    } 
-                    // check if there's already a refused offer with these details
-                    else if($this->teacherModel->OfferDetailsAreRefused(array("state" => $state->value, "commune" => $commune->value, "subject" => $subject->value))){
-                        $response_array["display_alert"] = true;
-                        $response_array["alert_title"] = "Ajouter Annonce";
-                        $response_array["alert_icon"] = "warning";
-                        $response_array["alert_text"] = "Il y a déjà une annonce refusée avec ces détails. Veuillez spécifier d'autres détails";
-                        $response_array["danger_mode"] = true;
                     } else{
-                        // get the teacher id
-                        $teacherId = $this->teacherModel->GetTeacherId($this->teacherModel->auth->getUserId());
                         // add the offer
                         $this->teacherModel->AddOffer(array("status" => 0, "teacher_id" => $teacherId[0]["id"], "state" => $state->value, "commune" => $commune->value, "level" => $level->value, "subject" => $subject->value, "price" => $price->value));
                         // indicate that the offer was added

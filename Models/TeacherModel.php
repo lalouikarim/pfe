@@ -41,21 +41,6 @@ class TeacherModel extends AccountModel{
         }
     }
 
-    // check if an offer's details are refused
-    public function OfferDetailsAreRefused($columnsValues){
-        $stmt = $this->dbconn->prepare("SELECT id FROM offers WHERE status = 2 AND (state = :state OR commune = :commune OR subject = :subject) LIMIT 1");
-        $stmt->bindParam("state", $columnsValues["state"]);
-        $stmt->bindParam(":commune", $columnsValues["commune"]);
-        $stmt->bindParam(":subject", $columnsValues["subject"]);
-        $stmt->execute();
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        if(empty($result)){
-            return false;
-        } else{
-            return true;
-        }
-    }
-
     // get the teacher id
     public function GetTeacherId($userId){
         $stmt = $this->dbconn->prepare("SELECT id FROM teachers WHERE user_id = :user_id");
