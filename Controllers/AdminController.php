@@ -26,6 +26,8 @@ class AdminController{
             case "displayrefusalpopup":
                 $this->DisplayOfferRefusalPopup();
                 break;
+            case "refuse":
+                $this->RefuseOffer();
             default:
                 break;
         }
@@ -392,6 +394,78 @@ class AdminController{
                     if($this->adminModel->OfferHasStatus($offerId->value, 0)){
                         $response_array["display_refusal_popup"] = true;
                         $response_array["refusal_popup_id"] = "offer_refusal_popup_" . $offerId->value;
+                    } else{
+                        $response_array["alert_text"] = "L'annonce soit n'existe pas soit elle est déja validée ou refusée";
+                        $response_array["alert_icon"] = "warning";
+                    }
+                }
+            }
+        }
+
+        echo json_encode($response_array);
+    }
+
+    // refuse an offer
+    private function RefuseOffer(){
+        $response_array["valid_role"] = false;
+        $response_array["danger_mode"] = true;
+        $response_array["alert_title"] = "Refuser Annonce";
+        $response_array["alert_text"] = $response_array["alert_icon"] = $response_array["error"] = "";
+        if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["offer_id"])){
+            // the user must be logged in and a validated admin
+            if($this->UserHasAdminPriveleges()){
+                $response_array["valid_role"] = true;
+                // sanitize the user's input
+                $offerId = new Input($_POST["offer_id"]);
+                $offerId->Sanitize();
+                $refusalReason = new Input($_POST["refusal_reason"]);
+                $refusalReason->Sanitize();
+                // ensure a valid offer id
+                if(!preg_match("/^(0|[1-9][0-9]*)$/", $offerId->value)){
+                    $response_array["error"] = "Invalid input";
+                }
+                // ensure a non-empty reason
+                else if($refusalReason->value == ""){
+                    $response_array["error"] = "Veuillez spécifier une raison pour le refus";
+                } else{
+                    // make sure that the offer exists and is indeed in a pending state
+                    if($this->adminModel->OfferHasStatus($offerId->value, 0)){
+                        // update the status of the offer
+                        $this->adminModel->ChangeOfferStatus($offerId->value, 2);
+                        // insert the refusal reason
+                        $this->adminModel->InsertOfferRefusal(array("offer_id" => $offerId->value, "refusal_reason" => $refusalReason->value));
+                        $response_array["alert_text"] = "Annonce refusée avec succés";
+                        $response_array["alert_icon"] = "success";
+                        $response_array["danger_mode"] = false;
+                        // display the new number of offers of each category
+                        $response_array["offers_number_html"] = $this->DisplayCategoriesNumber("return");
+
+                        // get the necessary details of the offer to send an email to the teacher
+                        $offerDetails = $this->adminModel->RetrieveOfferForEmail($offerId->value);
+                        // send an email to the teacher
+                        if(!empty($offerDetails)){
+                            if($offerDetails[0]["level"] === "primary"){
+                                $offerDetails[0]["level"] = "Primaire";
+                            } else if($offerDetails[0]["level"] === "middle"){
+                                $offerDetails[0]["level"] = "Moyenne";
+                            } else if($offerDetails[0]["level"] === "high"){
+                                $offerDetails[0]["level"] = "Secondaire";
+                            } else if($offerDetails[0]["level"] === "college"){
+                                $offerDetails[0]["level"] = "Universitaire";
+                            }
+                            
+                            $to = $offerDetails[0]["email"];
+                            $subject = "Validation de votre annonce des cours particuliers";
+                            $message = "Malheureusement cette annonce des cours particuliers a été refsuée:
+                            Wilaya: " . $offerDetails[0]["state"] . "
+                            Commune: " . $offerDetails[0]["commune"] . "
+                            Palier: " . $offerDetails[0]["level"] . "
+                            Matière: " . $offerDetails[0]["subject"] . "
+                            La raison de refus est : " . $refusalReason->value;
+                            $headers = 'From:emailprogrammingtest@gmail.com' . "\r\n"; 
+                            // send the verification email to the user
+                            mail($to, $subject, $message, $headers);
+                        }
                     } else{
                         $response_array["alert_text"] = "L'annonce soit n'existe pas soit elle est déja validée ou refusée";
                         $response_array["alert_icon"] = "warning";

@@ -58,6 +58,14 @@ class AdminModel extends AccountModel{
         $stmt->bindParam(":id", $offerId);
         $stmt->execute();
     }
+
+    // insert the offer refusal reason
+    public function InsertOfferRefusal($columnsValues){
+        $stmt = $this->dbconn->prepare("INSERT INTO offers_refusals (offer_id, refusal_reason) VALUES (:offer_id, :refusal_reason)");
+        $stmt->bindParam(":offer_id", $columnsValues["offer_id"]);
+        $stmt->bindParam(":refusal_reason", $columnsValues["refusal_reason"]);
+        $stmt->execute();
+    }
 }
 
 ?>
