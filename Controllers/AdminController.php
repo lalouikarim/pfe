@@ -23,6 +23,9 @@ class AdminController{
             case "validate":
                 $this->ValidateOffer();
                 break;
+            case "displayrefusalpopup":
+                $this->DisplayOfferRefusalPopup();
+                break;
             default:
                 break;
         }
@@ -165,7 +168,7 @@ class AdminController{
                             $response_array["offers_html"] .= "
                         <div class='card'>
                             <div class='card-header'>
-                                <a class='card-link' data-toggle='collapse' href='#collapse_offer_". $offer["id"] . "'>
+                                <a class='card-link' id='offer_title_" . $offer["id"] . "' data-toggle='collapse' href='#collapse_offer_". $offer["id"] . "'>
                                     Annonce N° " . $offer["id"] . "
                                 </a>
                             </div>
@@ -257,10 +260,20 @@ class AdminController{
                             if($offer["status"] == 0){
                                 $response_array["offers_html"] .="
                                 <div class='options btn-group btn-block'>
-                                    <form id='validate_offer_" . $offer["id"] . "_form'class='btn btn-success'>
+                                    <form id='validate_offer_" . $offer["id"] . "_form' class='btn btn-success'>
                                         <button class='btn btn-success' onclick=" . '"' . "ValidateOffers('validate', " . $offer["id"] . ')"' . ">Valider</button>
                                     </form>
-                                    <button class='btn btn-danger'>Refuser</button>
+                                    <form id='display_offer_refusal_popup_" . $offer["id"] . "_form' class='btn btn-danger'>
+                                        <button class='btn btn-danger' onclick='DisplayOfferRefusalPopup(" . $offer["id"] . ")'>Refuser</button>
+                                    </form>
+                                    <div class='popup-hide' id='offer_refusal_popup_" . $offer["id"] . "'> 
+                                        <button class='btn btn-primary' id='offer_refusal_hidepopup_" . $offer["id"] . "' onclick=" . '"' . "hidepopup('offer_refusal_popup_" . $offer["id"] . "')" . '"' . ">&times;</button>
+                                        <br><label for='refusal_reason' class='form-label'>Raison de refus de<button class='btn btn-link' onclick='RedirectAdminToOffer(" . $offer["id"] . ", 0)'> l'annonce N° " . $offer["id"] . "</button></label>
+                                        <form id='refuse_offer_" . $offer["id"] . "_form'>
+                                            <textarea class='form-control' rows='3' id='refusal_reason' name='refusal_reason'></textarea>
+                                            <button class='btn btn-danger' onclick=" . '"' . "ValidateOffers('refuse', " . $offer["id"] . ")" . '"' . ">Refuser</button>
+                                        </form>
+                                    </div>
                                 </div>";
                             }
                             $response_array["offers_html"] .= "
@@ -347,6 +360,38 @@ class AdminController{
                             // send the verification email to the user
                             mail($to, $subject, $message, $headers);
                         }
+                    } else{
+                        $response_array["alert_text"] = "L'annonce soit n'existe pas soit elle est déja validée ou refusée";
+                        $response_array["alert_icon"] = "warning";
+                    }
+                }
+            }
+        }
+
+        echo json_encode($response_array);
+    }
+
+    // display the offer refusal popup
+    private function DisplayOfferRefusalPopup(){
+        $response_array["valid_role"] = $response_array["display_refusal_popup"] = false;
+        $response_array["danger_mode"] = true;
+        $response_array["alert_title"] = "Refuser Annonce";
+        $response_array["alert_text"] = $response_array["alert_icon"] = $response_array["error"] = "";
+        if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["offer_id"])){
+            // the user must be logged in and an admin
+            if($this->UserHasAdminPriveleges()){
+                $response_array["valid_role"] = true;
+                // sanitize the user's input
+                $offerId = new Input($_POST["offer_id"]);
+                $offerId->Sanitize();
+                // ensure a valid offer id
+                if(!preg_match("/^(0|[1-9][0-9]*)$/", $offerId->value)){
+                    $response_array["error"] = "Invalid input";
+                } else{
+                    // make sure that the offer exists and is indeed in a pending state
+                    if($this->adminModel->OfferHasStatus($offerId->value, 0)){
+                        $response_array["display_refusal_popup"] = true;
+                        $response_array["refusal_popup_id"] = "offer_refusal_popup_" . $offerId->value;
                     } else{
                         $response_array["alert_text"] = "L'annonce soit n'existe pas soit elle est déja validée ou refusée";
                         $response_array["alert_icon"] = "warning";
