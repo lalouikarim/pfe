@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS `users_throttling` (
   KEY `expires_at` (`expires_at`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `teachers`(
+CREATE TABLE IF NOT EXISTS `teachers`(
  `id`             int(10) NOT NULL AUTO_INCREMENT ,
  `user_id`        int(10) NOT NULL ,
  `sign_up_status` int(2) NOT NULL ,
@@ -109,4 +109,14 @@ CREATE TABLE IF NOT EXISTS `admins`(
 PRIMARY KEY (`id`),
 KEY `FK_70` (`user_id`),
 CONSTRAINT `FK_72` FOREIGN KEY `FK_70` (`user_id`) REFERENCES `users` (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `offers_refusals`(
+ `id`       int(10) NOT NULL AUTO_INCREMENT ,
+ `offer_id`  int(10) NOT NULL ,
+ `refusal_reason`  varchar(250) NOT NULL ,
+
+PRIMARY KEY (`id`),
+KEY `FK_80` (`offer_id`),
+CONSTRAINT `FK_82` FOREIGN KEY `FK_80` (`offer_id`) REFERENCES `offers` (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
