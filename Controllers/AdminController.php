@@ -240,7 +240,7 @@ class AdminController{
                             }
                             $response_array["offers_html"] .="
                                         <div class='col-sm-3 address-infos'>
-                                            <h4>Séance</h3>
+                                            <h4>Séance</h4>
                                             <p>Wilaya: " . $offer["state"] . "</p>
                                             <p>Commune: " . $offer["commune"] ."</p>";
                             if($offer["level"] === "primary"){
@@ -256,7 +256,20 @@ class AdminController{
                                             <p>Palier: " . $offer["level"] . "</p>
                                             <p>Matière: " . $offer["subject"] . "</p>
                                             <p>Prix: " . $offer["price"] . " DA
+                                        </div>";
+                            // if it's a refused offer then display the refusal info
+                            if($offer["status"] == 2){
+                                $refusalInfo = $this->adminModel->GetOfferRefusal($offer["id"]);
+                                if(!empty($refusalInfo)){
+                                    $response_array["offers_html"] .= "
+                                        <div class='col-sm-3 refusal-infos'>
+                                            <h4>Refus</h4>
+                                            <p>Raison: " . $refusalInfo[0]["refusal_reason"] . "</p>
                                         </div>
+                                    ";
+                                }
+                            }
+                            $response_array["offers_html"] .="
                                     </div>
                                 </div>";
                             if($offer["status"] == 0){
