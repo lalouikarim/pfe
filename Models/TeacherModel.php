@@ -82,6 +82,15 @@ class TeacherModel extends AccountModel{
         $offersList = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return $offersList;
     }
+
+    // get an offer's refusal info
+    public function GetOfferRefusal($offerId){
+        $stmt = $this->dbconn->prepare("SELECT * FROM offers_refusals WHERE offer_id = :offer_id");
+        $stmt->bindParam(":offer_id", $offerId);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $result;
+    }
 } 
 
 ?>
