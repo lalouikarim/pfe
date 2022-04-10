@@ -91,6 +91,20 @@ class TeacherModel extends AccountModel{
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return $result;
     }
+
+    // check if the offer can be updated by a teacher
+    public function OfferUpdatableByTeacher($offerId, $teacherId){
+        $stmt = $this->dbconn->prepare("SELECT id FROM offers WHERE id = :id AND teacher_id = :teacher_id AND (status = 0 OR status = 1)");
+        $stmt->bindParam(":id", $offerId);
+        $stmt->bindParam(":teacher_id", $teacherId);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if(empty($result)){
+            return false;
+        } else{
+            return true;
+        }
+    }
 } 
 
 ?>
