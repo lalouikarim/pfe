@@ -150,7 +150,7 @@ class TeacherController{
                                     <div class='card-body'>
                                         <div class='mycard order-card row'>
                                             <div class='col-sm-3 address-infos'>
-                                                <h4>Location</h3>
+                                                <h4>Location</h4>
                                                 <p>Wilaya: " . $offer["state"] . "</p>
                                                 <p>Commune: " . $offer["commune"] ."</p>
                                             </div>
@@ -169,10 +169,23 @@ class TeacherController{
                                                 <p>Palier: " . $offer["level"] . "</p>
                                                 <p>Matière: " . $offer["subject"] . "</p>
                                             </div>
-                                            <div class='col-sm-6 price-infos'>
-                                                <h4>Prix</h3>
+                                            <div class='col-sm-3 price-infos'>
+                                                <h4>Prix</h4>
                                                 <p>". $offer["price"] . " DA</p>
+                                            </div>";
+                            // if it's a refused offer then display the refusal info
+                            if($offer["status"] == 2){
+                                $refusalInfo = $this->teacherModel->GetOfferRefusal($offer["id"]);
+                                if(!empty($refusalInfo)){
+                                    $response_array["offers_html"] .= "
+                                            <div class='col-sm-3 refusal-infos'>
+                                                <h4>Refus</h4>
+                                                <p>Raison: " . $refusalInfo[0]["refusal_reason"] . "</p>
                                             </div>
+                                    ";
+                                }
+                            }
+                            $response_array["offers_html"] .= "
                                         </div>
                                     </div>";
                             // a teacher can modify and delete pending and accepted offers
