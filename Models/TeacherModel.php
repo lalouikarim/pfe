@@ -26,12 +26,13 @@ class TeacherModel extends AccountModel{
 
     // check if an offer's details already exist
     public function OfferDetailsExist($columnsValues){
-        $stmt = $this->dbconn->prepare("SELECT id FROM offers WHERE teacher_id = :teacher_id AND state = :state AND commune = :commune AND level = :level AND subject = :subject");
+        $stmt = $this->dbconn->prepare("SELECT id FROM offers WHERE teacher_id = :teacher_id AND state = :state AND commune = :commune AND level = :level AND subject = :subject AND price = :price");
         $stmt->bindParam(":teacher_id", $columnsValues["teacher_id"]);
         $stmt->bindParam("state", $columnsValues["state"]);
         $stmt->bindParam(":commune", $columnsValues["commune"]);
         $stmt->bindParam(":level", $columnsValues["level"]);
         $stmt->bindParam(":subject", $columnsValues["subject"]);
+        $stmt->bindParam(":price", $columnsValues["price"]);
         $stmt->execute();
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         if(empty($result)){
@@ -104,6 +105,28 @@ class TeacherModel extends AccountModel{
         } else{
             return true;
         }
+    }
+
+    // update the details of an offer
+    public function UpdateOfferDetails($columnsValues){
+        $stmt = $this->dbconn->prepare("UPDATE offers SET status = :status, state = :state, commune = :commune, level = :level, subject = :subject, price = :price WHERE id = :offer_id");
+        $stmt->bindParam(":status", $columnsValues["status"]);
+        $stmt->bindParam(":state", $columnsValues["state"]);
+        $stmt->bindParam(":commune", $columnsValues["commune"]);
+        $stmt->bindParam(":level", $columnsValues["level"]);
+        $stmt->bindParam(":subject", $columnsValues["subject"]);
+        $stmt->bindParam(":price", $columnsValues["price"]);
+        $stmt->bindParam(":offer_id", $columnsValues["offer_id"]);
+        $stmt->execute();
+    }
+
+    // get the status of an offer
+    public function GetOfferStatus($offerId){
+        $stmt = $this->dbconn->prepare("SELECT status FROM offers WHERE id = :offer_id");
+        $stmt->bindParam(":offer_id", $offerId);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $result[0]["status"];
     }
 } 
 

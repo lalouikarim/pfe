@@ -25,6 +25,9 @@ class TeacherController{
             case "displaymodifyofferpopup":
                 $this->DisplayModifyOfferPopup();
                 break;
+            case "modify":
+                $this->ModifyOffer();
+                break;
             default:
                 break;
         }
@@ -244,7 +247,7 @@ class TeacherController{
                                                         <span class='help-block' id='price_error_offer_" . $offer["id"] . "'></span>
                                                     </div>
                                                 </div>
-                                                <button type='submit' class='btnPerform' style='float:left;' onclick=" . '"' . "Offer('add')" . '"' . ">Mettre a jour</button>
+                                                <button type='submit' class='btnPerform' style='float:left;' onclick=" . '"' . "Offer('modify', " . $offer["id"] . ")" . '"' . ">Mettre a jour</button>
                                             </form>
                                         </div>
                                         <button class='btn btn-danger'>Supprimer</button>
@@ -313,7 +316,7 @@ class TeacherController{
                     $teacherId = $this->teacherModel->GetTeacherId($this->teacherModel->auth->getUserId());
 
                     // check if the teacher already added an offer with these details
-                    if($this->teacherModel->OfferDetailsExist(array("teacher_id" => $teacherId[0]["id"], "state" => $state->value, "commune" => $commune->value, "level" => $level->value, "subject" => $subject->value))){
+                    if($this->teacherModel->OfferDetailsExist(array("teacher_id" => $teacherId[0]["id"], "state" => $state->value, "commune" => $commune->value, "level" => $level->value, "subject" => $subject->value, "price" => $price->value))){
                         $response_array["display_alert"] = true;
                         $response_array["alert_title"] = "Ajouter Annonce";
                         $response_array["alert_icon"] = "warning";
@@ -359,13 +362,101 @@ class TeacherController{
                     // get the teacher id
                     $teacherId = $this->teacherModel->GetTeacherId($this->teacherModel->auth->getUserId());
 
-                    // make sure that the offer exists, is indeed in a pending state, and belong to this teacher
+                    // make sure that the offer exists, is indeed in a pending or accepted state, and belongs to this teacher
                     if($this->teacherModel->OfferUpdatableByTeacher($offerId->value, $teacherId[0]["id"])){
                         $response_array["display_modify_offer_popup"] = true;
                         $response_array["modify_offer_popup_id"] = "modify_offer_popup_" . $offerId->value;
                     } else{
                         $response_array["alert_text"] = "L'annonce soit n'existe pas soit elle est refusée soit elle ne vous appartient pas";
                         $response_array["alert_icon"] = "warning";
+                    }
+                }
+            }
+        }
+
+        echo json_encode($response_array);
+    }
+
+    // modify an offer
+    private function ModifyOffer(){
+        $response_array["valid_role"] = $response_array["display_alert"] = $response_array["action_completed"] = false;
+        if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["offer_id"]) && isset($_POST["state"]) && isset($_POST["commune"]) && isset($_POST["level"]) && isset($_POST["subject"]) && isset($_POST["price"])){
+            // the user must be logged in and a validated teacher
+            if($this->UserHasTeacherPriveleges()){
+                $response_array["valid_role"] = true;
+                // sanitize the user's input
+                $offerId = new Input($_POST["offer_id"]);
+                $offerId->Sanitize();
+                $state = new Input($_POST["state"]);
+                $state->Sanitize();
+                $commune = new Input($_POST["commune"]);
+                $commune->Sanitize();
+                $level = new Input($_POST["level"]);
+                $level->Sanitize();
+                $subject = new Input($_POST["subject"]);
+                $subject->Sanitize();
+                $price = new Input($_POST["price"]);
+                $price->Sanitize();
+
+                // ensure a valid offer id
+                if(!preg_match("/^(0|[1-9][0-9]*)$/", $offerId->value)){
+                    $response_array["error"] = "Invalid input";
+                } else{
+                    $response_array["errors"]["state_error_offer_" . $offerId->value] = $response_array["errors"]["commune_error_offer_" . $offerId->value] = "";
+                    $response_array["errors"]["level_error_offer_" . $offerId->value] = ""; $response_array["errors"]["subject_error_offer_" . $offerId->value] = "";
+                    $response_array["errors"]["price_error_offer_" . $offerId->value] = "";
+
+                    // ensure a non-empty state
+                    if($state->value === ""){
+                        $response_array["errors"]["state_error_offer_" . $offerId->value] = "Veuillez spécifier une wilaya";
+                    }
+                    // ensure a non-empty commune
+                    else if($commune->value === ""){
+                        $response_array["errors"]["commune_error_offer_" . $offerId->value] = "Veuillez spécifier une commune";
+                    }
+                    // ensure a valid level format
+                    else if(!preg_match("/^primary|middle|high|college$/", $level->value)){
+                        $response_array["errors"]["level_error_offer_" . $offerId->value] = "Veuillez choisir un palier valide<br>";
+                    }
+                    // ensure a non-empty subject
+                    else if($subject->value === ""){
+                        $response_array["errors"]["subject_error_offer_" . $offerId->value] = "Veuillez spécifier une matière";
+                    }
+                    // ensure a valid price format
+                    else if(!preg_match("/^[1-9][0-9]+$/", $price->value)){
+                        $response_array["errors"]["price_error_offer_" . $offerId->value] = "Veuillez spécifier un prix valide<br>";
+                    } else{
+                        $response_array["display_alert"] = true;
+
+                        // get the teacher id
+                        $teacherId = $this->teacherModel->GetTeacherId($this->teacherModel->auth->getUserId());
+
+                        // make sure that the offer exists, is indeed in a pending or accepted state, and belongs to this teacher
+                        if($this->teacherModel->OfferUpdatableByTeacher($offerId->value, $teacherId[0]["id"])){
+                            // check if the teacher already has an offer with these details
+                            if($this->teacherModel->OfferDetailsExist(array("teacher_id" => $teacherId[0]["id"], "state" => $state->value, "commune" => $commune->value, "level" => $level->value, "subject" => $subject->value, "price" => $price->value))){
+                                $response_array["display_alert"] = true;
+                                $response_array["alert_title"] = "Modifier Annonce";
+                                $response_array["alert_icon"] = "warning";
+                                $response_array["alert_text"] = "Vous avez déja une annonce avec ces détails";
+                                $response_array["danger_mode"] = true;
+                            } else{
+                                // update the offer's info
+                                $this->teacherModel->UpdateOfferDetails(array("status" => 0, "state" => $state->value, "commune" => $commune->value,"level" => $level->value, "subject" => $subject->value, "price" => $price->value, "offer_id" => $offerId->value));
+                                $response_array["action_completed"] = true;
+                                $response_array["alert_title"] = "Modifier Annonce";
+                                $response_array["alert_text"] = "Annonce modifiée avec succés";
+                                $response_array["alert_icon"] = "success";
+                                $response_array["danger_mode"] = false;
+                                // display the new number of offers of each category
+                                $response_array["offers_number_html"] = $this->DisplayCategoriesNumber("return");
+                            }
+                        } else{
+                            $response_array["alert_title"] = "Modifier Annonce";
+                            $response_array["alert_text"] = "L'annonce soit n'existe pas soit elle est refusée soit elle ne vous appartient pas";
+                            $response_array["alert_icon"] = "warning";
+                            $response_array["danger_mode"] = true;
+                        }
                     }
                 }
             }
