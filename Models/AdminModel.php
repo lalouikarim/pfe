@@ -66,6 +66,15 @@ class AdminModel extends AccountModel{
         $stmt->bindParam(":refusal_reason", $columnsValues["refusal_reason"]);
         $stmt->execute();
     }
+
+    // get the offer refusal info
+    public function GetOfferRefusal($offerId){
+        $stmt = $this->dbconn->prepare("SELECT * FROM offers_refusals WHERE offer_id = :offer_id");
+        $stmt->bindParam(":offer_id", $offerId);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $result;
+    }
 }
 
 ?>
