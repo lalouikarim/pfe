@@ -22,6 +22,9 @@ class TeacherController{
             case "displayoffercategory":
                 $this->ViewOffers();
                 break;
+            case "displaymodifyofferpopup":
+                $this->DisplayModifyOfferPopup();
+                break;
             default:
                 break;
         }
@@ -142,7 +145,7 @@ class TeacherController{
                             $response_array["offers_html"] .= "
                             <div class='card offers_". $offer["status"] . "'>
                                 <div class='card-header'>
-                                    <a class='card-link' data-toggle='collapse' href='#collapse_offer_". $offer["id"] . "'>
+                                    <a class='card-link' id='offer_title_" . $offer["id"] . "' data-toggle='collapse' href='#collapse_offer_". $offer["id"] . "'>
                                         Annonce N° " . $offer["id"] . "
                                     </a>
                                 </div>
@@ -157,16 +160,16 @@ class TeacherController{
                                             <div class='col-sm-3 studies-infos'>
                                                 <h4>Etudes</h4>";
                             if($offer["level"] === "primary"){
-                                $offer["level"] = "Primaire";
+                                $level = "Primaire";
                             } else if($offer["level"] === "middle"){
-                                $offer["level"] = "Moyenne";
+                                $level = "Moyenne";
                             } else if($offer["level"] === "high"){
-                                $offer["level"] = "Secondaire";
+                                $level = "Secondaire";
                             } else if($offer["level"] === "college"){
-                                $offer["level"] = "Universitaire";
+                                $level = "Universitaire";
                             }
                             $response_array["offers_html"] .= "
-                                                <p>Palier: " . $offer["level"] . "</p>
+                                                <p>Palier: " . $level . "</p>
                                                 <p>Matière: " . $offer["subject"] . "</p>
                                             </div>
                                             <div class='col-sm-3 price-infos'>
@@ -192,7 +195,58 @@ class TeacherController{
                             if($offer["status"] == 0 || $offer["status"] == 1){
                                 $response_array["offers_html"] .="
                                     <div class='options btn-group btn-block'>
-                                        <button class='btn btn-success'>Modifier</button>
+                                        <form class='btn btn-success' id='display_modify_offer_popup_" . $offer["id"] . "_form'>
+                                            <button class='btn btn-success' onclick='DisplayModifyOfferPopup(" . $offer["id"] . ")'>Modifier</button>
+                                        </form>
+                                        <div class='popup-hide' id='modify_offer_popup_" . $offer["id"] . "'> 
+                                            <button class='btn btn-primary' id='modify_offer_hidepopup_" . $offer["id"] . "' onclick=" . '"' . "hidepopup('modify_offer_popup_" . $offer["id"] . "')" . '"' . ">&times;</button>
+                                            <br><label class='form-label'>Modifier <button class='btn btn-link' onclick='RedirectTeacherToOffer(" . $offer["id"] . ")'> l'annonce N° " . $offer["id"] . "</button></label>
+                                            <form id='modify_offer_" . $offer["id"] . "_form'>
+                                                <div class='col-md-9'>
+                                                    <div class='form-group'>
+                                                        <input type='text' class='form-control' name='state' value='" . $offer["state"] . "'/>
+                                                        <span class='help-block' id='state_error_offer_" . $offer["id"] . "'></span>
+                                                    </div>
+                                                    <div class='form-group'>
+                                                        <input type='text' class='form-control' name='commune' value='" . $offer["commune"] . "'/>
+                                                        <span class='help-block' id='commune_error_offer_" . $offer["id"] . "'></span>
+                                                    </div>
+                                                    <div class='form-group'>
+                                                        <select class='custom-select' name='level'>";
+
+                                // this array holds levels info
+                                $levelsArray = [];
+                                $levelsArray["primary"] = "Primaire";
+                                $levelsArray["middle"] = "Moyenne";
+                                $levelsArray["high"] = "Secondaire";
+                                $levelsArray["college"] = "Universitaire";
+                                // the level of the offer should be selected
+                                $response_array["offers_html"] .= "
+                                                            <option value='" . $offer["level"] . "' selected>" . $levelsArray[$offer["level"]] . "</option>";
+                                // remove the level of the offer
+                                unset($levelsArray[$offer["level"]]);
+                                // display the remaining levels
+                                foreach($levelsArray as $key => $value){
+                                    $response_array["offers_html"] .="
+                                                            <option value='" . $key . "'>" . $value . "</option>";
+                                }
+
+                                $response_array["offers_html"] .= "
+                                                        </select>
+                                                        <span class='help-block' id='level_error_offer_" . $offer["id"] . "'></span>
+                                                    </div>
+                                                    <div class='form-group'>
+                                                        <input type='text' class='form-control' name='subject'  value='" . $offer["subject"] . "'/>
+                                                        <span class='help-block' id='subject_error_offer_" . $offer["id"] . "'></span>
+                                                    </div>
+                                                    <div class='form-group'>
+                                                        <input type='text' class='form-control' name='price'  value='" . $offer["price"] . "'/>
+                                                        <span class='help-block' id='price_error_offer_" . $offer["id"] . "'></span>
+                                                    </div>
+                                                </div>
+                                                <button type='submit' class='btnPerform' style='float:left;' onclick=" . '"' . "Offer('add')" . '"' . ">Mettre a jour</button>
+                                            </form>
+                                        </div>
                                         <button class='btn btn-danger'>Supprimer</button>
                                     </div>";
                             }
@@ -283,6 +337,41 @@ class TeacherController{
     
             echo json_encode($response_array);
         }
+    }
+
+    // display the modify offer popup
+    private function DisplayModifyOfferPopup(){
+        $response_array["valid_role"] = $response_array["display_modify_offer_popup"] = false;
+        $response_array["danger_mode"] = true;
+        $response_array["alert_title"] = "Refuser Annonce";
+        $response_array["alert_text"] = $response_array["alert_icon"] = $response_array["error"] = "";
+        if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["offer_id"])){
+            // the user must be logged in and a validated teacher
+            if($this->UserHasTeacherPriveleges()){
+                $response_array["valid_role"] = true;
+                // sanitize the user's input
+                $offerId = new Input($_POST["offer_id"]);
+                $offerId->Sanitize();
+                // ensure a valid offer id
+                if(!preg_match("/^(0|[1-9][0-9]*)$/", $offerId->value)){
+                    $response_array["error"] = "Invalid input";
+                } else{
+                    // get the teacher id
+                    $teacherId = $this->teacherModel->GetTeacherId($this->teacherModel->auth->getUserId());
+
+                    // make sure that the offer exists, is indeed in a pending state, and belong to this teacher
+                    if($this->teacherModel->OfferUpdatableByTeacher($offerId->value, $teacherId[0]["id"])){
+                        $response_array["display_modify_offer_popup"] = true;
+                        $response_array["modify_offer_popup_id"] = "modify_offer_popup_" . $offerId->value;
+                    } else{
+                        $response_array["alert_text"] = "L'annonce soit n'existe pas soit elle est refusée soit elle ne vous appartient pas";
+                        $response_array["alert_icon"] = "warning";
+                    }
+                }
+            }
+        }
+
+        echo json_encode($response_array);
     }
 }
 
