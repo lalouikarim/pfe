@@ -28,6 +28,9 @@ class AdminController{
                 break;
             case "refuse":
                 $this->RefuseOffer();
+            case "delete":
+                $this->DeleteOffer();
+                break;
             default:
                 break;
         }
@@ -272,6 +275,8 @@ class AdminController{
                             $response_array["offers_html"] .="
                                     </div>
                                 </div>";
+                            
+                            // the admin can only accept and refuse pending offers
                             if($offer["status"] == 0){
                                 $response_array["offers_html"] .="
                                 <div class='options btn-group btn-block'>
@@ -290,6 +295,15 @@ class AdminController{
                                         </form>
                                     </div>
                                 </div>";
+                            }
+                            // the admin can only delete refused offers
+                            else if($offer["status"] == 2){
+                                $response_array["offers_html"] .= "
+                                    <div class='options btn-group btn-block'>
+                                        <form id='delete_offer_" . $offer["id"] . "_form' class='btn btn-danger'>
+                                            <button class='btn btn-danger' onclick=" . '"' . "ValidateOffers('delete', " . $offer["id"] . ", 'Supprimer Annonce', 'Etes vous sur de supprimer cette annonce?', 'Annuler', 'Procéder')" . '"' . ">Supprimer</button>
+                                        </form>
+                                    </div>";
                             }
                             $response_array["offers_html"] .= "
                             </div>
@@ -482,6 +496,50 @@ class AdminController{
                     } else{
                         $response_array["alert_text"] = "L'annonce soit n'existe pas soit elle est déja validée ou refusée";
                         $response_array["alert_icon"] = "warning";
+                    }
+                }
+            }
+        }
+
+        echo json_encode($response_array);
+    }
+
+    // delete an offer
+    private function DeleteOffer(){
+        $response_array["valid_role"] = false;
+        $response_array["danger_mode"] = true;
+        $response_array["alert_title"] = "Supprimer Annonce";
+        $response_array["alert_text"] = $response_array["alert_icon"] = $response_array["error"] = "";
+        if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["offer_id"])){
+            // the user must be logged in and an admin
+            if($this->UserHasAdminPriveleges()){
+                $response_array["valid_role"] = true;
+                // sanitize the user's input
+                $offerId = new Input($_POST["offer_id"]);
+                $offerId->Sanitize();
+
+                // ensure a valid offer id
+                if(!preg_match("/^(0|[1-9][0-9]*)$/", $offerId->value)){
+                    $response_array["error"] = "Invalid input";
+                } else{
+                    // make sure that the offer exists and is refused
+                    if($this->adminModel->OfferHasStatus($offerId->value, 2)){
+                        // delete the offer's ratings (if found)
+                        $this->adminModel->DeleteOfferRatings($offerId->value);
+                        // delete the offer's refusal info (if found)
+                        $this->adminModel->DeleteOfferRefusal($offerId->value);
+                        // delete the offer's info
+                        $this->adminModel->DeleteOffer($offerId->value);
+                        
+                        $response_array["alert_text"] = "Annonce supprimée avec succés";
+                        $response_array["alert_icon"] = "success";
+                        $response_array["danger_mode"] = false;
+                        // display the new number of offers of each category
+                        $response_array["offers_number_html"] = $this->DisplayCategoriesNumber("return");
+                    } else{
+                        $response_array["alert_text"] = "L'annonce soit n'existe pas soit elle n'est pas refusée";
+                        $response_array["alert_icon"] = "warning";
+                        $response_array["danger_mode"] = true;
                     }
                 }
             }
