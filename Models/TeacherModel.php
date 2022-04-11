@@ -93,12 +93,20 @@ class TeacherModel extends AccountModel{
         return $result;
     }
 
-    // check if the offer can be updated by a teacher
-    public function OfferUpdatableByTeacher($offerId, $teacherId){
-        $stmt = $this->dbconn->prepare("SELECT id FROM offers WHERE id = :id AND teacher_id = :teacher_id AND (status = 0 OR status = 1)");
-        $stmt->bindParam(":id", $offerId);
-        $stmt->bindParam(":teacher_id", $teacherId);
-        $stmt->execute();
+    // check if the offer can be updated (modified or deleted) by a teacher
+    public function OfferUpdatableByTeacher($offerId, $teacherId, $acceptedStatuses){
+        // a string of questions marks to bind the $acceptedStatuses array
+        $qMarks = str_repeat('?,', count($acceptedStatuses) - 1) . '?';
+        $stmt = $this->dbconn->prepare("SELECT id FROM offers WHERE id = ? AND teacher_id = ? AND status IN ($qMarks)");
+
+        // create an array to bind the parameters
+        $columnsValues = array($offerId, $teacherId);
+        // push each accepted status to the parameters array
+        foreach($acceptedStatuses as $status){
+            array_push($columnsValues, $status);
+        }
+
+        $stmt->execute($columnsValues);
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         if(empty($result)){
             return false;
