@@ -276,7 +276,7 @@ class AdminController{
                                 $response_array["offers_html"] .="
                                 <div class='options btn-group btn-block'>
                                     <form id='validate_offer_" . $offer["id"] . "_form' class='btn btn-success'>
-                                        <button class='btn btn-success' onclick=" . '"' . "ValidateOffers('validate', " . $offer["id"] . ')"' . ">Valider</button>
+                                        <button class='btn btn-success' onclick=" . '"' . "ValidateOffers('validate', " . $offer["id"] . ", 'Valider Annonce', 'Etes vous sur de valider cette annonce?', 'Annuler', 'Procéder')" . '"' . ">Valider</button>
                                     </form>
                                     <form id='display_offer_refusal_popup_" . $offer["id"] . "_form' class='btn btn-danger'>
                                         <button class='btn btn-danger' onclick='DisplayOfferRefusalPopup(" . $offer["id"] . ")'>Refuser</button>
@@ -286,7 +286,7 @@ class AdminController{
                                         <br><label for='refusal_reason' class='form-label'>Raison de refus de<button class='btn btn-link' onclick='RedirectAdminToOffer(" . $offer["id"] . ", 0)'> l'annonce N° " . $offer["id"] . "</button></label>
                                         <form id='refuse_offer_" . $offer["id"] . "_form'>
                                             <textarea class='form-control' rows='3' id='refusal_reason' name='refusal_reason'></textarea>
-                                            <button class='btn btn-danger' onclick=" . '"' . "ValidateOffers('refuse', " . $offer["id"] . ")" . '"' . ">Refuser</button>
+                                            <button class='btn btn-danger' onclick=" . '"' . "ValidateOffers('refuse', " . $offer["id"] . ", 'Refuser Annonce', 'Etes vous sur de refuser cette annonce?', 'Annuler', 'Procéder')" . '"' . ">Refuser</button>
                                         </form>
                                     </div>
                                 </div>";
