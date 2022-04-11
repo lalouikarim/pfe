@@ -250,8 +250,8 @@ class TeacherController{
                                                         <span class='help-block' id='price_error_offer_" . $offer["id"] . "'></span>
                                                     </div>
                                                 </div>
-                                                <button type='submit' class='btnPerform' style='float:left;' onclick=" . '"' . "Offer('modify', " . $offer["id"] . ")" . '"' . ">Mettre a jour</button>
                                             </form>
+                                            <button type='submit' class='btnPerform' style='float:left;' onclick=" . '"' . "ConfirmClick('modify', " . $offer["id"] . ", 'Modifier Annonce', 'Etes vous sur de modifier cette annonce? Elle devrait etre ré-validée par un admin', 'Annuler', 'Procéder')" . '"' . ">Mettre a jour</button>
                                         </div>
                                         <form id='delete_offer_" . $offer["id"] . "_form'></form>
                                         <button class='btn btn-danger' onclick=" . '"' . "ConfirmClick('delete', " . $offer["id"] . ", 'Supprimer Annonce', 'Etes vous sur de supprimer cette annonce?', 'Annuler', 'Procéder')" . '"' . ">Supprimer</button>
