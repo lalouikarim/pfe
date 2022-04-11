@@ -136,6 +136,27 @@ class TeacherModel extends AccountModel{
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return $result[0]["status"];
     }
+
+    // delete an offer's rating details
+    public function DeleteOfferRatings($offerId){
+        $stmt = $this->dbconn->prepare("DELETE FROM ratings WHERE offer_id = :offer_id");
+        $stmt->bindParam(":offer_id", $offerId);
+        $stmt->execute();
+    }
+
+    // delete an offer's refusal info
+    public function DeleteOfferRefusal($offerId){
+        $stmt = $this->dbconn->prepare("DELETE FROM offers_refusals WHERE offer_id = :offer_id");
+        $stmt->bindParam(":offer_id", $offerId);
+        $stmt->execute();
+    }
+
+    // delete an offer
+    public function DeleteOffer($offerId){
+        $stmt = $this->dbconn->prepare("DELETE FROM offers WHERE id = :id");
+        $stmt->bindParam(":id", $offerId);
+        $stmt->execute();
+    }
 } 
 
 ?>
