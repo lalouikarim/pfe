@@ -28,6 +28,9 @@ class TeacherController{
             case "modify":
                 $this->ModifyOffer();
                 break;
+            case "delete":
+                $this->DeleteOffer();
+                break;
             default:
                 break;
         }
@@ -194,7 +197,7 @@ class TeacherController{
                             $response_array["offers_html"] .= "
                                         </div>
                                     </div>";
-                            // a teacher can modify and delete pending and accepted offers
+                            // a teacher can modify only pending and accepted offers and can delete all offers regardless of the category
                             if($offer["status"] == 0 || $offer["status"] == 1){
                                 $response_array["offers_html"] .="
                                     <div class='options btn-group btn-block'>
@@ -250,7 +253,14 @@ class TeacherController{
                                                 <button type='submit' class='btnPerform' style='float:left;' onclick=" . '"' . "Offer('modify', " . $offer["id"] . ")" . '"' . ">Mettre a jour</button>
                                             </form>
                                         </div>
-                                        <button class='btn btn-danger'>Supprimer</button>
+                                        <form id='delete_offer_" . $offer["id"] . "_form'></form>
+                                        <button class='btn btn-danger' onclick=" . '"' . "ConfirmClick('delete', " . $offer["id"] . ", 'Supprimer Annonce', 'Etes vous sur de supprimer cette annonce?', 'Annuler', 'Procéder')" . '"' . ">Supprimer</button>
+                                    </div>";
+                            } else{
+                                $response_array["offers_html"] .= "
+                                    <div class='options btn-group btn-block'>
+                                        <form id='delete_offer_" . $offer["id"] . "_form'></form>
+                                        <button class='btn btn-danger' onclick=" . '"' . "ConfirmClick('delete', " . $offer["id"] . ", 'Supprimer Annonce', 'Etes vous sur de supprimer cette annonce?', 'Annuler', 'Procéder')" . '"' . ">Supprimer</button>
                                     </div>";
                             }
                             $response_array["offers_html"] .= "
@@ -363,7 +373,7 @@ class TeacherController{
                     $teacherId = $this->teacherModel->GetTeacherId($this->teacherModel->auth->getUserId());
 
                     // make sure that the offer exists, is indeed in a pending or accepted state, and belongs to this teacher
-                    if($this->teacherModel->OfferUpdatableByTeacher($offerId->value, $teacherId[0]["id"])){
+                    if($this->teacherModel->OfferUpdatableByTeacher($offerId->value, $teacherId[0]["id"], array(0, 1))){
                         $response_array["display_modify_offer_popup"] = true;
                         $response_array["modify_offer_popup_id"] = "modify_offer_popup_" . $offerId->value;
                     } else{
@@ -432,7 +442,7 @@ class TeacherController{
                         $teacherId = $this->teacherModel->GetTeacherId($this->teacherModel->auth->getUserId());
 
                         // make sure that the offer exists, is indeed in a pending or accepted state, and belongs to this teacher
-                        if($this->teacherModel->OfferUpdatableByTeacher($offerId->value, $teacherId[0]["id"])){
+                        if($this->teacherModel->OfferUpdatableByTeacher($offerId->value, $teacherId[0]["id"], array(0, 1))){
                             // check if the teacher already has an offer with these details
                             if($this->teacherModel->OfferDetailsExist(array("teacher_id" => $teacherId[0]["id"], "state" => $state->value, "commune" => $commune->value, "level" => $level->value, "subject" => $subject->value, "price" => $price->value))){
                                 $response_array["display_alert"] = true;
@@ -457,6 +467,55 @@ class TeacherController{
                             $response_array["alert_icon"] = "warning";
                             $response_array["danger_mode"] = true;
                         }
+                    }
+                }
+            }
+        }
+
+        echo json_encode($response_array);
+    }
+
+    // delete an offer
+    private function DeleteOffer(){
+        $response_array["valid_role"] = $response_array["display_alert"] = $response_array["action_completed"] = false;
+        if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["offer_id"])){
+            // the user must be logged in and a validated teacher
+            if($this->UserHasTeacherPriveleges()){
+                $response_array["valid_role"] = true;
+                // sanitize the user's input
+                $offerId = new Input($_POST["offer_id"]);
+                $offerId->Sanitize();
+
+                // ensure a valid offer id
+                if(!preg_match("/^(0|[1-9][0-9]*)$/", $offerId->value)){
+                    $response_array["error"] = "Invalid input";
+                } else{
+                    $response_array["display_alert"] = true;
+
+                    // get the teacher id
+                    $teacherId = $this->teacherModel->GetTeacherId($this->teacherModel->auth->getUserId());
+
+                    // make sure that the offer exists and belongs to this teacher
+                    if($this->teacherModel->OfferUpdatableByTeacher($offerId->value, $teacherId[0]["id"], array(0, 1, 2))){
+                        // delete the offer's ratings (if found)
+                        $this->teacherModel->DeleteOfferRatings($offerId->value);
+                        // delete the offer's refusal info (if found)
+                        $this->teacherModel->DeleteOfferRefusal($offerId->value);
+                        // delete the offer's info
+                        $this->teacherModel->DeleteOffer($offerId->value);
+                        
+                        $response_array["action_completed"] = true;
+                        $response_array["alert_title"] = "Supprimer Annonce";
+                        $response_array["alert_text"] = "Annonce supprimée avec succés";
+                        $response_array["alert_icon"] = "success";
+                        $response_array["danger_mode"] = false;
+                        // display the new number of offers of each category
+                        $response_array["offers_number_html"] = $this->DisplayCategoriesNumber("return");
+                    } else{
+                        $response_array["alert_title"] = "Supprimer Annonce";
+                        $response_array["alert_text"] = "L'annonce soit n'existe pas soit elle ne vous appartient pas";
+                        $response_array["alert_icon"] = "warning";
+                        $response_array["danger_mode"] = true;
                     }
                 }
             }
