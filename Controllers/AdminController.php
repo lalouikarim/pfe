@@ -31,6 +31,9 @@ class AdminController{
             case "delete":
                 $this->DeleteOffer();
                 break;
+            case "viewteacherssignupsnumber":
+                $this->DisplayTeachersSignUpsCategoriesNumber("echo");
+                break;
             default:
                 break;
         }
@@ -55,7 +58,6 @@ class AdminController{
 
     // display the number of offers of each category
     private function DisplayCategoriesNumber($returnOrEcho){
-        //if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST[""]))
         $response_array["valid_role"] = false;
         $response_array["offers_number_html"] = "";
         // the user must be logged in and a validated admin
@@ -546,6 +548,48 @@ class AdminController{
         }
 
         echo json_encode($response_array);
+    }
+
+    // display the number of teachers sign ups of each category
+    private function DisplayTeachersSignUpsCategoriesNumber($returnOrEcho){
+        $response_array["valid_role"] = false;
+        $response_array["teachers_sign_ups_number_html"] = "";
+        // the user must be logged in and an admin
+        if($this->UserHasAdminPriveleges()){
+            $response_array["valid_role"] = true;
+            // get the number of teachers sign ups of each category
+            $teachersSignUpsNumber = $this->adminModel->TeachersSignUpsCategoriesNumber();
+            $response_array["teachers_sign_ups_number_html"] = "
+        <div id='teachers_sign_ups_section' class='container tab-pane active'><br>
+            <h3>Gestion des enseignants</h3>
+            <br>
+            <div class='card-deck'>
+                <div class='card'>
+                  <div class='card-body text-center'>
+                    <p class='card-text'>Inscriptions en attente de validation</p>
+                    <p><b>" . $teachersSignUpsNumber[0]["pending"] . "</b>  Inscriptions</p>
+                    <button class='btn btn-link'>Voir Détails</button>
+                  </div>
+                </div>
+                <div class='card'>
+                  <div class='card-body text-center'>
+                    <p class='card-text'>Inscriptions Acceptées</p>
+                    <p> <b>" . $teachersSignUpsNumber[0]["validated"] . "</b>  Inscriptions</p>
+                    <button class='btn btn-link'>Voir Détails</button>
+                  </div>
+                </div>
+            </div>
+            <hr>
+            <div id='sign_ups_details'></div>
+        </div>";
+        }
+
+        // the "return" is for displaying the new number of offers of each category
+        if($returnOrEcho === "echo"){
+            echo json_encode($response_array);
+        } else if($returnOrEcho === "return"){
+            return $response_array["teachers_sign_ups_number_html"];
+        }
     }
 }
 
