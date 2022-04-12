@@ -34,6 +34,9 @@ class AdminController{
             case "viewteacherssignupsnumber":
                 $this->DisplayTeachersSignUpsCategoriesNumber("echo");
                 break;
+            case "displayteacherssignupsdetails":
+                $this->DisplayTeachersSignUpsDetails();
+                break;
             default:
                 break;
         }
@@ -568,14 +571,18 @@ class AdminController{
                   <div class='card-body text-center'>
                     <p class='card-text'>Inscriptions en attente de validation</p>
                     <p><b>" . $teachersSignUpsNumber[0]["pending"] . "</b>  Inscriptions</p>
-                    <button class='btn btn-link'>Voir Détails</button>
+                    <form id='display_teachers_sign_ups_0_form'>
+                        <button class='btn btn-link' onclick=" .  '"' . "DisplayTeachersSignUpsDetails(0)" . '"' . ">Voir Détails</button>
+                    </form>
                   </div>
                 </div>
                 <div class='card'>
                   <div class='card-body text-center'>
                     <p class='card-text'>Inscriptions Acceptées</p>
                     <p> <b>" . $teachersSignUpsNumber[0]["validated"] . "</b>  Inscriptions</p>
-                    <button class='btn btn-link'>Voir Détails</button>
+                    <form id='display_teachers_sign_ups_1_form'>
+                        <button class='btn btn-link' onclick=" .  '"' . "DisplayTeachersSignUpsDetails(1)" . '"' . ">Voir Détails</button>
+                    </form>
                   </div>
                 </div>
             </div>
@@ -590,6 +597,154 @@ class AdminController{
         } else if($returnOrEcho === "return"){
             return $response_array["teachers_sign_ups_number_html"];
         }
+    }
+
+    // display the details of all teachers sign ups
+    private function DisplayTeachersSignUpsDetails(){
+        $response_array["valid_role"] = false;
+        $response_array["sign_ups_details_html"] = $response_array["error"] = "";
+        if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["status"])){
+            // the user must be logged in and a validated admin
+            if($this->UserHasAdminPriveleges()){
+                $response_array["valid_role"] = true;
+                // sanitize the user's input
+                $status = new Input($_POST["status"]);
+                $status->Sanitize();
+                if(!preg_match("/^(0|1|2)$/", $status->value)){
+                    $response_array["error"] = "Invalid status";
+                } else{
+                    // retrieve all sign ups of the specified status
+                    $allSignUps = $this->adminModel->RetrieveTeachersSignUps($status->value);
+                    if(empty($allSignUps)){
+                        $response_array["sign_ups_details_html"] = "Pas d'inscriptions de cette catégorie";
+                    } else{
+                        // these are used for pagination
+                        $signUpsPerPage = 0;
+                        $pageNumber = 0;
+
+                        // display the literal version of the status
+                        if($status->value == 0){
+                            $statusStr = "en attente de validation";
+                        } else if($status->value == 1){
+                            $statusStr = "acceptées";
+                        }
+                        $response_array["sign_ups_details_html"] .= "
+            <div class='sign-ups'>
+                <h3 id='sign_ups_header'>Listes des inscriptions " . $statusStr . "</h3>";
+                    // display the previous and next buttons only if there are more than 6 sign ups
+                    if(count($allSignUps) > 6){
+                        $response_array["sign_ups_details_html"] .= "
+                <div class='centring pagination'>
+                    <a id='previous_page_btn_sign-ups' class='pagination-btn-active btn btn-link' onclick=" . '"' . "pagination(0, 'sign-ups')" . '"' . " hidden>&ltPrécédent</a>
+                    <a id='next_page_btn_sign-ups' class='pagination-btn-active btn btn-link' onclick=" . '"' . "pagination(1, 'sign-ups')" . '"' . ">Suivant&gt</a>
+                </div>";
+                    }
+                        $response_array["sign_ups_details_html"] .="
+                <div id='accordion_sign_ups'>";
+                        foreach($allSignUps as $signUp){
+                            // if it's the first sign up of the page
+                            if($signUpsPerPage === 0){
+                                $response_array["sign_ups_details_html"] .= '
+                    <div id="pagination_sign-ups_' . $pageNumber . '" class="page';
+
+                                // the first page should be automatically visible
+                                if($pageNumber === 0)
+                                {
+                                    $response_array["sign_ups_details_html"] .= ' page-active-sign-ups';
+                                }
+
+                                $response_array["sign_ups_details_html"] .= '">';
+
+                                // increment the page number
+                                $pageNumber += 1;
+                            }
+                            $response_array["sign_ups_details_html"] .= "
+                        <div class='card'>
+                            <div class='card-header'>
+                                <a class='card-link' id='sign_up_title_" . $signUp["teacher_id"] . "' data-toggle='collapse' href='#collapse_sign_up_". $signUp["teacher_id"] . "'>
+                                    Inscription N° " . $signUp["teacher_id"] . "
+                                </a>
+                            </div>
+                            <div id='collapse_sign_up_". $signUp["teacher_id"] . "' class='collapse show' data-parent='#accordion_sign_ups'>
+                                <div class='card-body'>
+                                    <div class='mycard order-card row'>
+                                        <div class='col-sm-3'>
+                                            <h4>Infos du compte</h4>
+                                            <p>Email: " . $signUp["email"] . "</p>
+                                            <p>Nom d'utilisateur: " . $signUp["username"] ."</p>
+                                        </div>
+                                        <div class='col-sm-3'>
+                                            <h4>Infos Légales</h4>
+                                            <p>Nom: " . $signUp["last_name"] . "</p>
+                                            <p>Prénom: " . $signUp["first_name"] ."</p>
+                                        </div>
+                                        <div class='col-sm-3'>
+                                            <h4>Photos</h4>
+                                            <p>Carte d'identité: <button class='btn btn-link' onclick=" . '"' ."showpopup('sign_up_card_img_" . $signUp["teacher_id"] . "')" . '"' . ">Voir image</button></p>
+                                            <div class='popup-hide' id='sign_up_card_img_" .  $signUp["teacher_id"] . "'> 
+                                                <button class='btn btn-primary' id='sign_up_card_img_hidepopup_" . $signUp["teacher_id"] . "' onclick=" . '"' . "hidepopup('sign_up_card_img_" .  $signUp["teacher_id"] . "')" . '"' . ">&times;</button>
+                                                <img class='card-img-top' src='../Images/IDCards/" . md5($signUp["card_photo"]) .".jpeg' alt='Card Img' style='height:200px'>
+                                            </div>
+                                            <p>Enseignant: <button class='btn btn-link' onclick=" . '"' ."showpopup('sign_up_teacher_img_" . $signUp["teacher_id"] . "')" . '"' . ">Voir image</button></p>
+                                            <div class='popup-hide' id='sign_up_teacher_img_" .  $signUp["teacher_id"] . "'> 
+                                                <button class='btn btn-primary' id='sign_up_teacher_img_hidepopup_" . $signUp["teacher_id"] . "' onclick=" . '"' . "hidepopup('sign_up_teacher_img_" .  $signUp["teacher_id"] . "')" . '"' . ">&times;</button>
+                                                <img class='card-img-top' src='../Images/Teachers/" . md5($signUp["teacher_photo"]) .".jpeg' alt='Teacher Img' style='height:200px'>
+                                            </div>
+                                        </div>
+                                        <div class='col-sm-3'>
+                                            <h4>Infos Prefossionnelles</h4>
+                                            <p>Téléphone: " . $signUp["phone"] . "</p>
+                                            <p>Lien de CV: <a target='_blank' href='" . $signUp["cv_link"] ."'>Cliquez ici</a></p>
+                                        </div>";
+                            $response_array["sign_ups_details_html"] .="
+                                    </div>
+                                </div>";
+                            
+                            // the admin can only accept and refuse pending sign ups
+                            if($signUp["sign_up_status"] == 0){
+                                $response_array["sign_ups_details_html"] .="
+                                <div class='options btn-group btn-block'>
+                                    <button class='btn btn-success'>Accepter</button>
+                                    <button class='btn btn-danger'>Refuser et supprimer enseignant</button>
+                                </div>";
+                            }
+                            // the admin can only delete accepted teachers
+                            else if($signUp["sign_up_status"] == 1){
+                                $response_array["sign_ups_details_html"] .= "
+                                    <div class='options btn-group btn-block'>
+                                        <button class='btn btn-danger' >Supprimer enseignant</button>
+                                    </div>";
+                            }
+                            $response_array["sign_ups_details_html"] .= "
+                            </div>
+                        </div>";
+                            
+                            // indicate that a sign up has been echoed
+                            $signUpsPerPage += 1;
+
+                            // if it's the last sign up of the page
+                            if($signUpsPerPage === 6){
+                                $response_array["sign_ups_details_html"] .= "
+                    </div>";
+                                // reinitialize the number of sign ups echoed in the page
+                                $signUpsPerPage = 0;
+                            }
+                        }
+                        // this is in case the last page has less than 6 sign ups
+                        if($signUpsPerPage > 0 && $signUpsPerPage < 6){
+                            $response_array["sign_ups_details_html"] .= "
+                    </div>";
+                        }
+
+                    $response_array["sign_ups_details_html"] .= "
+                </div>
+            </div>";
+                    }
+                }
+            }
+        }
+
+        echo json_encode($response_array);
     }
 }
 
