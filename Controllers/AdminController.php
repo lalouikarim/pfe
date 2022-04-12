@@ -37,6 +37,9 @@ class AdminController{
             case "displayteacherssignupsdetails":
                 $this->DisplayTeachersSignUpsDetails();
                 break;
+            case "acceptteacher":
+                $this->AcceptTeacher();
+                break;
             default:
                 break;
         }
@@ -704,7 +707,9 @@ class AdminController{
                             if($signUp["sign_up_status"] == 0){
                                 $response_array["sign_ups_details_html"] .="
                                 <div class='options btn-group btn-block'>
-                                    <button class='btn btn-success'>Accepter</button>
+                                    <form class='btn btn-success' id='acceptteacher_" . $signUp["teacher_id"] . "_form'>
+                                        <button class='btn btn-success' onclick=" . '"' . "UpdateTeachers('acceptteacher', " . $signUp["teacher_id"] . ", 'Accepter Inscription', 'Etes vous sur d\\'accepter cet enseignant?', 'Annuler', 'Procéder')" . '"' . ">Accepter</button>
+                                    </form>
                                     <button class='btn btn-danger'>Refuser et supprimer enseignant</button>
                                 </div>";
                             }
@@ -739,6 +744,55 @@ class AdminController{
                     $response_array["sign_ups_details_html"] .= "
                 </div>
             </div>";
+                    }
+                }
+            }
+        }
+
+        echo json_encode($response_array);
+    }
+
+    // accept a teacher sign up
+    private function AcceptTeacher(){
+        $response_array["valid_role"] = false;
+        $response_array["danger_mode"] = true;
+        $response_array["alert_title"] = "Accepter Inscription";
+        $response_array["alert_text"] = $response_array["alert_icon"] = $response_array["error"] = "";
+        if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["teacher_id"])){
+            // the user must be logged in and an admin
+            if($this->UserHasAdminPriveleges()){
+                $response_array["valid_role"] = true;
+                // sanitize the user's input
+                $teacherId = new Input($_POST["teacher_id"]);
+                $teacherId->Sanitize();
+                // ensure a valid teacher id
+                if(!preg_match("/^(0|[1-9][0-9]*)$/", $teacherId->value)){
+                    $response_array["error"] = "Invalid input";
+                } else{
+                    // make sure that the teacher exists and is indeed in a pending state
+                    if($this->adminModel->TeacherHasStatus($teacherId->value, 0)){
+                        // update the status of the teacher
+                        $this->adminModel->ChangeTeacherStatus($teacherId->value, 1);
+                        $response_array["alert_text"] = "Inscription acceptée avec succés";
+                        $response_array["alert_icon"] = "success";
+                        $response_array["danger_mode"] = false;
+                        // display the new number of sign ups of each category
+                        $response_array["teachers_sign_ups_number_html"] = $this->DisplayTeachersSignUpsCategoriesNumber("return");
+
+                        // get the necessary details of the offer to send an email to the teacher
+                        $teacherDetails = $this->adminModel->GetTeacherById($teacherId->value);
+                        // send an email to the teacher
+                        if(!empty($teacherDetails)){
+                            $to = $teacherDetails[0]["email"];
+                            $subject = "Validation de votre inscription";
+                            $message = "Féliciations Mr/Mme " . $teacherDetails[0]["last_name"] . " " . $teacherDetails[0]["first_name"] . "!\nVotre inscription dans notre site des cours particuliers a été acceptée.\nMerci de nous choisir!";
+                            $headers = 'From:emailprogrammingtest@gmail.com' . "\r\n"; 
+                            // send the email to the user
+                            mail($to, $subject, $message, $headers);
+                        }
+                    } else{
+                        $response_array["alert_text"] = "L'enseignant soit n'existe pas soit il est déja accepté ou refusé";
+                        $response_array["alert_icon"] = "warning";
                     }
                 }
             }
