@@ -127,6 +127,15 @@ class AdminModel extends AccountModel{
             return true;
         }
     }
+
+    // get the teacher's info by id
+    public function GetTeacherById($teacherId){
+        $stmt = $this->dbconn->prepare("SELECT users.id AS user_id, users.email, teachers.id AS teacher_id, teachers.first_name, teachers.last_name FROM teachers INNER JOIN users ON teachers.user_id = users.id WHERE teachers.id = :teacher_id");
+        $stmt->bindParam(":teacher_id", $teacherId);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $result;
+    }
 }
 
 ?>
