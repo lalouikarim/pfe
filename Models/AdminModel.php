@@ -130,7 +130,7 @@ class AdminModel extends AccountModel{
 
     // get the teacher's info by id
     public function GetTeacherById($teacherId){
-        $stmt = $this->dbconn->prepare("SELECT users.id AS user_id, users.email, teachers.id AS teacher_id, teachers.first_name, teachers.last_name FROM teachers INNER JOIN users ON teachers.user_id = users.id WHERE teachers.id = :teacher_id");
+        $stmt = $this->dbconn->prepare("SELECT users.id AS user_id, users.email, teachers.id AS teacher_id, teachers.first_name, teachers.last_name, teachers.card_photo, teachers.teacher_photo FROM teachers INNER JOIN users ON teachers.user_id = users.id WHERE teachers.id = :teacher_id");
         $stmt->bindParam(":teacher_id", $teacherId);
         $stmt->execute();
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -141,6 +141,13 @@ class AdminModel extends AccountModel{
     public function ChangeTeacherStatus($teacherId, $status){
         $stmt = $this->dbconn->prepare("UPDATE teachers SET sign_up_status = :sign_up_status WHERE id = :teacher_id");
         $stmt->bindParam(":sign_up_status", $status);
+        $stmt->bindParam(":teacher_id", $teacherId);
+        $stmt->execute();
+    }
+
+    // delete a teacher
+    public function DeleteTeacher($teacherId){
+        $stmt = $this->dbconn->prepare("DELETE FROM teachers WHERE id = :teacher_id");
         $stmt->bindParam(":teacher_id", $teacherId);
         $stmt->execute();
     }
