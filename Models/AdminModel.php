@@ -104,6 +104,15 @@ class AdminModel extends AccountModel{
         $signUpsNumber = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return $signUpsNumber;
     }
+
+    // retrieve all teachers
+    public function RetrieveTeachersSignUps($status){
+        $stmt = $this->dbconn->prepare("SELECT users.id AS user_id, users.email, users.username, teachers.id AS teacher_id, teachers.sign_up_status, teachers.first_name, teachers.last_name, teachers.phone, teachers.card_photo, teachers.teacher_photo, teachers.cv_link FROM teachers INNER JOIN users ON teachers.user_id = users.id WHERE teachers.sign_up_status = :sign_up_status");
+        $stmt->bindParam(":sign_up_status", $status);
+        $stmt->execute();
+        $signUpsList = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $signUpsList;
+    }
 }
 
 ?>
