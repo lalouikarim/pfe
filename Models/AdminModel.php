@@ -113,6 +113,20 @@ class AdminModel extends AccountModel{
         $signUpsList = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return $signUpsList;
     }
+
+    // check if a teacher has a given status
+    public function TeacherHasStatus($teacherId, $status){
+        $stmt = $this->dbconn->prepare("SELECT id FROM teachers WHERE id = :id AND sign_up_status = :sign_up_status");
+        $stmt->bindParam(":id", $teacherId);
+        $stmt->bindParam(":sign_up_status", $status);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if(empty($result)){
+            return false;
+        } else{
+            return true;
+        }
+    }
 }
 
 ?>
