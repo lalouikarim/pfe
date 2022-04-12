@@ -136,6 +136,14 @@ class AdminModel extends AccountModel{
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return $result;
     }
+
+    // validate or refuse a teacher
+    public function ChangeTeacherStatus($teacherId, $status){
+        $stmt = $this->dbconn->prepare("UPDATE teachers SET sign_up_status = :sign_up_status WHERE id = :teacher_id");
+        $stmt->bindParam(":sign_up_status", $status);
+        $stmt->bindParam(":teacher_id", $teacherId);
+        $stmt->execute();
+    }
 }
 
 ?>
