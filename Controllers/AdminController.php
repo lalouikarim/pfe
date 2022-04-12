@@ -43,6 +43,9 @@ class AdminController{
             case "displayteacherrefusalpopup":
                 $this->DisplayTeacherRefusalPopup();
                 break;
+            case "refuseteacher":
+                $this->RefuseTeacher();
+                break;
             default:
                 break;
         }
@@ -835,6 +838,67 @@ class AdminController{
                     if($this->adminModel->TeacherHasStatus($teacherId->value, 0)){
                         $response_array["display_refusal_popup"] = true;
                         $response_array["refusal_popup_id"] = "teacher_refusal_popup_" . $teacherId->value;
+                    } else{
+                        $response_array["alert_text"] = "L'enseignant soit n'existe pas soit il est déja accepté";
+                        $response_array["alert_icon"] = "warning";
+                    }
+                }
+            }
+        }
+
+        echo json_encode($response_array);
+    }
+
+    // refuse a teacher sign up
+    private function RefuseTeacher(){
+        $response_array["valid_role"] = false;
+        $response_array["danger_mode"] = true;
+        $response_array["alert_title"] = "Refuser et supprimer Inscription";
+        $response_array["alert_text"] = $response_array["alert_icon"] = $response_array["error"] = "";
+        if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["teacher_id"]) && isset($_POST["refusal_reason"])){
+            // the user must be logged in and an admin
+            if($this->UserHasAdminPriveleges()){
+                $response_array["valid_role"] = true;
+                // sanitize the user's input
+                $teacherId = new Input($_POST["teacher_id"]);
+                $teacherId->Sanitize();
+                $refusalReason = new Input($_POST["refusal_reason"]);
+                $refusalReason->Sanitize();
+
+                // ensure a valid teacher id
+                if(!preg_match("/^(0|[1-9][0-9]*)$/", $teacherId->value)){
+                    $response_array["error"] = "Invalid input";
+                } 
+                // ensure a non-empty reason
+                else if($refusalReason->value == ""){
+                    $response_array["error"] = "Veuillez spécifier une raison pour le refus";
+                }else{
+                    // make sure that the teacher exists and is indeed in a pending state
+                    if($this->adminModel->TeacherHasStatus($teacherId->value, 0)){
+                        // get the details of the teacher
+                        $teacherDetails = $this->adminModel->GetTeacherById($teacherId->value);
+                        if(!empty($teacherDetails)){
+                            // delete the teacher's info
+                            $this->adminModel->DeleteTeacher($teacherId->value);
+                            // delete both images of the teacher
+                            unlink("../Images/IDCards/" . md5($teacherDetails[0]["card_photo"]) . ".jpeg");
+                            unlink("../Images/Teachers/" . md5($teacherDetails[0]["teacher_photo"]) . ".jpeg");
+                            // delete the teacher's user's info
+                            $this->adminModel->auth->admin()->deleteUserById($teacherDetails[0]["user_id"]);
+
+                            $response_array["alert_text"] = "Inscription refusée et supprimée avec succés";
+                            $response_array["alert_icon"] = "success";
+                            $response_array["danger_mode"] = false;
+                            // display the new number of sign ups of each category
+                            $response_array["teachers_sign_ups_number_html"] = $this->DisplayTeachersSignUpsCategoriesNumber("return");
+
+                            // send the email to the teacher
+                            $to = $teacherDetails[0]["email"];
+                            $subject = "Validation de votre inscription";
+                            $message = "Mr/Mme " . $teacherDetails[0]["last_name"] . " " . $teacherDetails[0]["first_name"] . ",\nMalheureusement votre inscription dans notre site des cours particuliers a été refusée pour cette raison: " . $refusalReason->value . "\nVotre compte est alors supprimé.\nMerci de nous choisir!";
+                            $headers = 'From:emailprogrammingtest@gmail.com' . "\r\n"; 
+                            mail($to, $subject, $message, $headers);
+                        }
                     } else{
                         $response_array["alert_text"] = "L'enseignant soit n'existe pas soit il est déja accepté";
                         $response_array["alert_icon"] = "warning";
