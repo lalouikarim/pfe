@@ -96,6 +96,14 @@ class AdminModel extends AccountModel{
         $stmt->bindParam(":id", $offerId);
         $stmt->execute();
     }
+
+    // retrieve the teachers singups' number of each category
+    public function TeachersSignUpsCategoriesNumber(){
+        $stmt = $this->dbconn->prepare("SELECT SUM(IF(sign_up_status = 0, 1, 0)) AS pending, SUM(IF(sign_up_status = 1, 1, 0)) AS validated FROM teachers");
+        $stmt->execute();
+        $signUpsNumber = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $signUpsNumber;
+    }
 }
 
 ?>
