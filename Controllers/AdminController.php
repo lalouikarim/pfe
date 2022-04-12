@@ -23,7 +23,7 @@ class AdminController{
             case "validate":
                 $this->ValidateOffer();
                 break;
-            case "displayrefusalpopup":
+            case "displayofferrefusalpopup":
                 $this->DisplayOfferRefusalPopup();
                 break;
             case "refuse":
@@ -39,6 +39,9 @@ class AdminController{
                 break;
             case "acceptteacher":
                 $this->AcceptTeacher();
+                break;
+            case "displayteacherrefusalpopup":
+                $this->DisplayTeacherRefusalPopup();
                 break;
             default:
                 break;
@@ -292,11 +295,11 @@ class AdminController{
                                         <button class='btn btn-success' onclick=" . '"' . "ValidateOffers('validate', " . $offer["id"] . ", 'Valider Annonce', 'Etes vous sur de valider cette annonce?', 'Annuler', 'Procéder')" . '"' . ">Valider</button>
                                     </form>
                                     <form id='display_offer_refusal_popup_" . $offer["id"] . "_form' class='btn btn-danger'>
-                                        <button class='btn btn-danger' onclick='DisplayOfferRefusalPopup(" . $offer["id"] . ")'>Refuser</button>
+                                        <button class='btn btn-danger' onclick='DisplayRefusalPopup('offer, '" . $offer["id"] . ")'>Refuser</button>
                                     </form>
                                     <div class='popup-hide' id='offer_refusal_popup_" . $offer["id"] . "'> 
                                         <button class='btn btn-primary' id='offer_refusal_hidepopup_" . $offer["id"] . "' onclick=" . '"' . "hidepopup('offer_refusal_popup_" . $offer["id"] . "')" . '"' . ">&times;</button>
-                                        <br><label for='refusal_reason' class='form-label'>Raison de refus de<button class='btn btn-link' onclick='RedirectAdminToOffer(" . $offer["id"] . ", 0)'> l'annonce N° " . $offer["id"] . "</button></label>
+                                        <br><label for='refusal_reason' class='form-label'>Raison de refus de<button class='btn btn-link' onclick=" . '"' . "RedirectAdminToCollapse('offer', " . $offer["id"] . ")" . '"' . "> l'annonce N° " . $offer["id"] . "</button></label>
                                         <form id='refuse_offer_" . $offer["id"] . "_form'>
                                             <textarea class='form-control' rows='3' id='refusal_reason' name='refusal_reason'></textarea>
                                             <button class='btn btn-danger' onclick=" . '"' . "ValidateOffers('refuse', " . $offer["id"] . ", 'Refuser Annonce', 'Etes vous sur de refuser cette annonce?', 'Annuler', 'Procéder')" . '"' . ">Refuser</button>
@@ -710,7 +713,17 @@ class AdminController{
                                     <form class='btn btn-success' id='acceptteacher_" . $signUp["teacher_id"] . "_form'>
                                         <button class='btn btn-success' onclick=" . '"' . "UpdateTeachers('acceptteacher', " . $signUp["teacher_id"] . ", 'Accepter Inscription', 'Etes vous sur d\\'accepter cet enseignant?', 'Annuler', 'Procéder')" . '"' . ">Accepter</button>
                                     </form>
-                                    <button class='btn btn-danger'>Refuser et supprimer enseignant</button>
+                                    <form id='display_teacher_refusal_popup_" . $signUp["teacher_id"] . "_form' class='btn btn-danger'>
+                                        <button class='btn btn-danger' onclick=" .  '"' . "DisplayRefusalPopup('teacher', " . $signUp["teacher_id"] . ")" . '"' . ">Refuser et Supprimer enseignant</button>
+                                    </form>
+                                    <div class='popup-hide' id='teacher_refusal_popup_" . $signUp["teacher_id"] . "'> 
+                                        <button class='btn btn-primary' id='teacher_refusal_hidepopup_" . $signUp["teacher_id"] . "' onclick=" . '"' . "hidepopup('teacher_refusal_popup_" . $signUp["teacher_id"] . "')" . '"' . ">&times;</button>
+                                        <br><label for='refusal_reason' class='form-label'>Raison de refus de<button class='btn btn-link' onclick=" . '"' . "RedirectAdminToCollapse('sign_up', " . $signUp["teacher_id"] . ")" . '"' . "> l'inscription N° " . $signUp["teacher_id"] . "</button></label>
+                                        <form id='refuseteacher_" . $signUp["teacher_id"] . "_form'>
+                                            <textarea class='form-control' rows='3' id='refusal_reason' name='refusal_reason'></textarea>
+                                            <button class='btn btn-danger' onclick=" . '"' . "UpdateTeachers('refuseteacher', " . $signUp["teacher_id"] . ", 'Refuser Inscription', 'Etes vous sur de refuser et supprimer cet enseignant?', 'Annuler', 'Procéder')" . '"' . ">Refuser</button>
+                                        </form>
+                                    </div>
                                 </div>";
                             }
                             // the admin can only delete accepted teachers
@@ -792,6 +805,38 @@ class AdminController{
                         }
                     } else{
                         $response_array["alert_text"] = "L'enseignant soit n'existe pas soit il est déja accepté ou refusé";
+                        $response_array["alert_icon"] = "warning";
+                    }
+                }
+            }
+        }
+
+        echo json_encode($response_array);
+    }
+
+    // display the teacher refusal popup
+    private function DisplayTeacherRefusalPopup(){
+        $response_array["valid_role"] = $response_array["display_refusal_popup"] = false;
+        $response_array["danger_mode"] = true;
+        $response_array["alert_title"] = "Refuser Annonce";
+        $response_array["alert_text"] = $response_array["alert_icon"] = $response_array["error"] = "";
+        if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["teacher_id"])){
+            // the user must be logged in and an admin
+            if($this->UserHasAdminPriveleges()){
+                $response_array["valid_role"] = true;
+                // sanitize the user's input
+                $teacherId = new Input($_POST["teacher_id"]);
+                $teacherId->Sanitize();
+                // ensure a valid teacher id
+                if(!preg_match("/^(0|[1-9][0-9]*)$/", $teacherId->value)){
+                    $response_array["error"] = "Invalid input";
+                } else{
+                    // make sure that the teacher's sign up exists and is indeed in a pending state
+                    if($this->adminModel->TeacherHasStatus($teacherId->value, 0)){
+                        $response_array["display_refusal_popup"] = true;
+                        $response_array["refusal_popup_id"] = "teacher_refusal_popup_" . $teacherId->value;
+                    } else{
+                        $response_array["alert_text"] = "L'enseignant soit n'existe pas soit il est déja accepté";
                         $response_array["alert_icon"] = "warning";
                     }
                 }
