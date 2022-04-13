@@ -28,6 +28,7 @@ class AdminController{
                 break;
             case "refuse":
                 $this->RefuseOffer();
+                break;
             case "delete":
                 $this->DeleteOffer();
                 break;
@@ -45,6 +46,9 @@ class AdminController{
                 break;
             case "refuseteacher":
                 $this->RefuseTeacher();
+                break;
+            case "deleteteacher":
+                $this->DeleteTeacher();
                 break;
             default:
                 break;
@@ -298,7 +302,7 @@ class AdminController{
                                         <button class='btn btn-success' onclick=" . '"' . "ValidateOffers('validate', " . $offer["id"] . ", 'Valider Annonce', 'Etes vous sur de valider cette annonce?', 'Annuler', 'Procéder')" . '"' . ">Valider</button>
                                     </form>
                                     <form id='display_offer_refusal_popup_" . $offer["id"] . "_form' class='btn btn-danger'>
-                                        <button class='btn btn-danger' onclick='DisplayRefusalPopup('offer, '" . $offer["id"] . ")'>Refuser</button>
+                                        <button class='btn btn-danger' onclick=" . '"' . "DisplayRefusalPopup('offer', " . $offer["id"] . ")" . '"' . ">Refuser</button>
                                     </form>
                                     <div class='popup-hide' id='offer_refusal_popup_" . $offer["id"] . "'> 
                                         <button class='btn btn-primary' id='offer_refusal_hidepopup_" . $offer["id"] . "' onclick=" . '"' . "hidepopup('offer_refusal_popup_" . $offer["id"] . "')" . '"' . ">&times;</button>
@@ -733,7 +737,9 @@ class AdminController{
                             else if($signUp["sign_up_status"] == 1){
                                 $response_array["sign_ups_details_html"] .= "
                                     <div class='options btn-group btn-block'>
-                                        <button class='btn btn-danger' >Supprimer enseignant</button>
+                                        <form class='btn btn-danger' id='deleteteacher_" . $signUp["teacher_id"] . "_form'>
+                                            <button class='btn btn-danger' onclick=" .  '"' . "UpdateTeachers('deleteteacher', " . $signUp["teacher_id"] . ", 'Supprimer Enseignant', 'Etes vous sur de supprimer cet enseignant?', 'Annuler', 'Procéder')" . '"' . ">Supprimer enseignant</button>
+                                        </form>
                                     </div>";
                             }
                             $response_array["sign_ups_details_html"] .= "
@@ -901,6 +907,73 @@ class AdminController{
                         }
                     } else{
                         $response_array["alert_text"] = "L'enseignant soit n'existe pas soit il est déja accepté";
+                        $response_array["alert_icon"] = "warning";
+                    }
+                }
+            }
+        }
+
+        echo json_encode($response_array);
+    }
+
+    // delete a teacher
+    private function DeleteTeacher(){
+        $response_array["valid_role"] = false;
+        $response_array["danger_mode"] = true;
+        $response_array["alert_title"] = "Supprimer Enseignant";
+        $response_array["alert_text"] = $response_array["alert_icon"] = $response_array["error"] = "";
+        if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["teacher_id"])){
+            // the user must be logged in and an admin
+            if($this->UserHasAdminPriveleges()){
+                $response_array["valid_role"] = true;
+                // sanitize the user's input
+                $teacherId = new Input($_POST["teacher_id"]);
+                $teacherId->Sanitize();
+                // ensure a valid teacher id
+                if(!preg_match("/^(0|[1-9][0-9]*)$/", $teacherId->value)){
+                    $response_array["error"] = "Invalid input";
+                } else{
+                    // make sure that the teacher exists and is indeed accepted
+                    if($this->adminModel->TeacherHasStatus($teacherId->value, 1)){
+                        // get the details of the teacher
+                        $teacherDetails = $this->adminModel->GetTeacherById($teacherId->value);
+                        if(!empty($teacherDetails)){
+                            // delete the teacher's offers (if found)
+                            $teacherOffers = $this->adminModel->GetOffersByTeacherId($teacherId->value);
+                            if(!empty($teacherOffers)){
+                                foreach($teacherOffers as $offer){
+                                    // delete the offer's ratings (if found)
+                                    $this->adminModel->DeleteOfferRatings($offer["offer_id"]);
+                                    // delete the offer's refusal info (if found)
+                                    $this->adminModel->DeleteOfferRefusal($offer["offer_id"]);
+                                    // delete the offer's info
+                                    $this->adminModel->DeleteOffer($offer["offer_id"]);
+                                }
+                            }
+
+                            // delete the teacher's info
+                            $this->adminModel->DeleteTeacher($teacherId->value);
+                            // delete both images of the teacher
+                            unlink("../Images/IDCards/" . md5($teacherDetails[0]["card_photo"]) . ".jpeg");
+                            unlink("../Images/Teachers/" . md5($teacherDetails[0]["teacher_photo"]) . ".jpeg");
+                            // delete the teacher's user's info
+                            $this->adminModel->auth->admin()->deleteUserById($teacherDetails[0]["user_id"]);
+
+                            $response_array["alert_text"] = "Enseignant supprimé avec succés";
+                            $response_array["alert_icon"] = "success";
+                            $response_array["danger_mode"] = false;
+                            // display the new number of sign ups of each category
+                            $response_array["teachers_sign_ups_number_html"] = $this->DisplayTeachersSignUpsCategoriesNumber("return");
+
+                            // send the email to the teacher
+                            $to = $teacherDetails[0]["email"];
+                            $subject = "Suppression de votre compte";
+                            $message = "Mr/Mme " . $teacherDetails[0]["last_name"] . " Un admin a supprimé votre compte.\nMerci de nous choisir";
+                            $headers = 'From:emailprogrammingtest@gmail.com' . "\r\n"; 
+                            mail($to, $subject, $message, $headers);
+                        }
+                    } else{
+                        $response_array["alert_text"] = "L'enseignant soit n'existe pas soit il n'est pas encore accepté";
                         $response_array["alert_icon"] = "warning";
                     }
                 }
