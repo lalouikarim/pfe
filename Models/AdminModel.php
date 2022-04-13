@@ -151,6 +151,15 @@ class AdminModel extends AccountModel{
         $stmt->bindParam(":teacher_id", $teacherId);
         $stmt->execute();
     }
+
+    // get the offers of a teacher
+    public function GetOffersByTeacherId($teacherId){
+        $stmt = $this->dbconn->prepare("SELECT offers.id AS offer_id FROM offers INNER JOIN teachers ON offers.teacher_id = teachers.id WHERE teachers.id = :teacher_id");
+        $stmt->bindParam(":teacher_id", $teacherId);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $result;
+    }
 }
 
 ?>
