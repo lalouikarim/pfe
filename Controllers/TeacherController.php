@@ -343,7 +343,7 @@ class TeacherController{
                         $response_array["alert_text"] = "Annonce ajoutée avec succès";
                         $response_array["danger_mode"] = false;
                         // the "home" of the teacher panel should display the new number of offers of each category
-                        $response_array["offers_html"] = $this->DisplayCategoriesNumber("return");
+                        $response_array["offers_number_html"] = $this->DisplayCategoriesNumber("return");
                     }
                 }
             }
