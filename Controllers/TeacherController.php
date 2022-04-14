@@ -13,6 +13,9 @@ class TeacherController{
 
     public function PerformAction($action){
         switch($action){
+            case "accesspanel":
+                $this->DisplayTeacherPanel();
+                break;
             case "addoffermenu":
                 $this->DisplayAddOfferMenu();
                 break;
@@ -57,6 +60,53 @@ class TeacherController{
         }
 
         return false;
+    }
+
+    // display the initial teacher panel
+    private function DisplayTeacherPanel(){
+        $response_array["valid_role"] = false;
+        // the user must be logged in and a validated teacher
+        if($this->UserHasTeacherPriveleges()){
+            $response_array["valid_role"] = true;
+
+            // the head part of the teacher panel
+            $response_array["head"] = "
+            <meta charset='UTF-8'>
+            <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+            <link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css'>
+            <link href='https://fonts.googleapis.com/css?family=Rubik:400,700|Crimson+Text:400,400i' rel='stylesheet'>
+            <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js'></script>
+            <script src='https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js'></script>
+            <script src='https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js'></script>
+            <script src='https://unpkg.com/sweetalert/dist/sweetalert.min.js'></script>
+            <script src='../Scripts/TeacherScripts.js'></script>
+            <title>Paneau de l'enseignant</title>
+            <link rel='stylesheet' href='../Styles/PanelsStyles.css'>";
+            // the body part of the teacher panel
+            $response_array["body"] = "
+            <div class='container-fluid row'>
+                <div class='col-sm-2'>
+                    <br>
+                    <h2>Commands</h2>
+                    <br>
+                    <!-- Nav pills -->
+                    <ul class='nav nav-pills flex-column ' role='tablist'>
+                        <li class='nav-item'>
+                            <a class='nav-link' data-toggle='pill' onclick='DisplayOfferNumber()' href='#home'>Voir Annonces</a>
+                        </li>
+                        <li class='nav-item'>
+                            <a class='nav-link' data-toggle='pill' onclick='DisplayAddOfferMenu()' href='#add_offer_section'>Ajouter Annonce</a>
+                        </li>
+                    </ul>  
+                </div>
+                <!-- Tab panes -->
+                <div class='tab-content col-sm-10' id='tab_content'>
+                </div>
+            </div>";
+        }
+
+        echo json_encode($response_array);
     }
 
     // display the number of offers of each category
@@ -291,7 +341,7 @@ class TeacherController{
 
             // the add offer menu
             $response_array["section"] = "
-            <div id='add_offer_section' class='container tab-pane fade active'><br>
+            <div id='add_offer_section' class='container tab-pane active'><br>
                 <h3>Ajouter Annonce</h3>
                 <div class='card-body'>
                     <div class='mycard order-card row'>
