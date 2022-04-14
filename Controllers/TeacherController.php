@@ -13,6 +13,9 @@ class TeacherController{
 
     public function PerformAction($action){
         switch($action){
+            case "addoffermenu":
+                $this->DisplayAddOfferMenu();
+                break;
             case "add":
                 $this->AddOffer();
                 break;
@@ -274,6 +277,63 @@ class TeacherController{
                     }
                 }
             }
+        }
+
+        echo json_encode($response_array);
+    }
+
+    // display the add offer html
+    private function DisplayAddOfferMenu(){
+        $response_array["valid_role"] = false;
+        // the user must be logged in and a validated teacher
+        if($this->UserHasTeacherPriveleges()){
+            $response_array["valid_role"] = true;
+
+            // the add offer menu
+            $response_array["section"] = "
+            <div id='add_offer_section' class='container tab-pane fade active'><br>
+                <h3>Ajouter Annonce</h3>
+                <div class='card-body'>
+                    <div class='mycard order-card row'>
+                        <div class='col-sm-9'>
+                            <form id='add_offer__form' method='post'>
+                                <div class='row'>
+                                    <div class='col-md-9'>
+                                        <div class='form-group'>
+                                            <input type='text' class='form-control' name='state' placeholder='Wilaya'/>
+                                            <span class='help-block' id='state_error'></span>
+                                        </div>
+                                        <div class='form-group'>
+                                            <input type='text' class='form-control' name='commune' placeholder='Commune'/>
+                                            <span class='help-block' id='commune_error'></span>
+                                        </div>
+                                        <div class='form-group'>
+                                            <select class='custom-select' name='level'>
+                                                <option value='choose_level' selected>--Choisir Palier--</option>
+                                                <option value='primary'>Primaire</option>
+                                                <option value='middle'>Moyenne</option>
+                                                <option value='high'>Secondaire</option>
+                                                <option value='college'>Universitaire</option>
+                                            </select>
+                                            <span class='help-block' id='level_error'></span>
+                                        </div>
+                                        <div class='form-group'>
+                                            <input type='text' class='form-control' name='subject'  placeholder='Matière'/>
+                                            <span class='help-block' id='subject_error'></span>
+                                        </div>
+                                        <div class='form-group'>
+                                            <input type='text' class='form-control' name='price'  placeholder='Prix de la séance'/>
+                                            <span class='help-block' id='price_error'></span>
+                                        </div>
+                                    </div>
+                                    <button type='submit' class='btnPerform' onclick=" . '"' . "Offer('add', '')" . '"' . ">Créer</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            ";
         }
 
         echo json_encode($response_array);
