@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+        window.onload = function(){
+            $.ajax({
+                type: "POST",
+                url: "../Controllers/TeacherController.php",
+                data: "&action=accesspanel",
+                success: function (data) {
+                    data = JSON.parse(data);
+                    if(data["valid_role"] === false){
+                        window.location.replace("http://localhost/pfe");
+                    } else{
+                        $("head").html(data["head"]);
+                        $("body").html(data["body"]);
+                    }
+                }
+            });
+        };
+    </script>
+</head>
+<body>
+</body>
+</html>
