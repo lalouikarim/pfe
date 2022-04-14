@@ -14,6 +14,9 @@ class AdminController{
     // perform an action
     public function PerformAction($action){
         switch($action){
+            case "access":
+                $this->DisplayAdminPanel();
+                break;
             case "viewoffersnumber":
                 $this->DisplayCategoriesNumber("echo");
                 break;
@@ -70,6 +73,53 @@ class AdminController{
         }
 
         return false;
+    }
+
+    // display the initial admin panel
+    private function DisplayAdminPanel(){
+        $response_array["valid_role"] = false;
+        // the user must be logged in and an admin
+        if($this->UserHasAdminPriveleges()){
+            $response_array["valid_role"] = true;
+
+            // the head part of the admin panel
+            $response_array["head"] = "
+            <meta charset='UTF-8'>
+            <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+            <link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css'>
+            <link href='https://fonts.googleapis.com/css?family=Rubik:400,700|Crimson+Text:400,400i' rel='stylesheet'>
+            <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js'></script>
+            <script src='https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js'></script>
+            <script src='https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js'></script>
+            <script src='https://unpkg.com/sweetalert/dist/sweetalert.min.js'></script>
+            <script src='../Scripts/AdminScripts.js'></script>
+            <title>Paneau de l'admin</title>
+            <link rel='stylesheet' href='../Styles/PanelsStyles.css'>";
+            // the body part of the admin panel
+            $response_array["body"] = "
+            <div class='container-fluid row'>
+                <div class='col-sm-2'>
+                    <br>
+                    <h2>Commands</h2>
+                    <br>
+                    <!-- Nav pills -->
+                    <ul class='nav nav-pills flex-column ' role='tablist'>
+                        <li class='nav-item'>
+                            <a class='nav-link' data-toggle='pill' onclick='DisplayOffersNumbers()' href='#home'>Voir Annonces</a>
+                        </li>
+                        <li class='nav-item'>
+                            <a class='nav-link' data-toggle='pill' onclick='DisplayTeachersSignUpsCategories()' href='#teachers_sign_ups_section'>Voir Inscriptions des enseignants</a>
+                        </li>
+                    </ul>  
+                </div>
+                <!-- Tab panes -->
+                <div class='tab-content col-sm-10' id='tab_content'>
+                </div>
+            </div>";
+        }
+
+        echo json_encode($response_array);
     }
 
     // display the number of offers of each category
