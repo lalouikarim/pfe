@@ -130,7 +130,7 @@ class AdminController{
         if($this->UserHasAdminPriveleges()){
             $response_array["valid_role"] = true;
             // get the number of offers of each category
-            $offersNumber = $this->adminModel->OfferCategoriesNumber();
+            $offersNumber = $this->adminModel->OfferCategoriesNumber("all");
             $response_array["offers_number_html"] = "
         <div id='home' class='container tab-pane active'><br>
             <h3>Gestion des annonces</h3>
@@ -192,7 +192,7 @@ class AdminController{
                     $response_array["error"] = "Invalid status";
                 } else{
                     // retrieve all offers
-                    $allOffers = $this->adminModel->RetrieveOffers($status->value);
+                    $allOffers = $this->adminModel->RetrieveOffers("all", array($status->value));
                     if(empty($allOffers)){
                         $response_array["offers_html"] = "Pas d'annonces de cette catégorie";
                     } else{
@@ -842,7 +842,8 @@ class AdminController{
                     $response_array["error"] = "Invalid input";
                 } else{
                     // make sure that the teacher exists and is indeed in a pending state
-                    if($this->adminModel->TeacherHasStatus($teacherId->value, 0)){
+                    $query = "SELECT id FROM teachers WHERE id = ? AND sign_up_status = ?";
+                    if($this->adminModel->TeacherHasStatus($query, array($teacherId->value, 0))){
                         // update the status of the teacher
                         $this->adminModel->ChangeTeacherStatus($teacherId->value, 1);
                         $response_array["alert_text"] = "Inscription acceptée avec succés";
@@ -852,7 +853,7 @@ class AdminController{
                         $response_array["teachers_sign_ups_number_html"] = $this->DisplayTeachersSignUpsCategoriesNumber("return");
 
                         // get the necessary details of the offer to send an email to the teacher
-                        $teacherDetails = $this->adminModel->GetTeacherById($teacherId->value);
+                        $teacherDetails = $this->adminModel->GetTeacherInfoById($teacherId->value);
                         // send an email to the teacher
                         if(!empty($teacherDetails)){
                             $to = $teacherDetails[0]["email"];
@@ -891,7 +892,8 @@ class AdminController{
                     $response_array["error"] = "Invalid input";
                 } else{
                     // make sure that the teacher's sign up exists and is indeed in a pending state
-                    if($this->adminModel->TeacherHasStatus($teacherId->value, 0)){
+                    $query = "SELECT id FROM teachers WHERE id = ? AND sign_up_status = ?";
+                    if($this->adminModel->TeacherHasStatus($query, array($teacherId->value, 0))){
                         $response_array["display_refusal_popup"] = true;
                         $response_array["refusal_popup_id"] = "teacher_refusal_popup_" . $teacherId->value;
                     } else{
@@ -930,9 +932,10 @@ class AdminController{
                     $response_array["error"] = "Veuillez spécifier une raison pour le refus";
                 }else{
                     // make sure that the teacher exists and is indeed in a pending state
-                    if($this->adminModel->TeacherHasStatus($teacherId->value, 0)){
+                    $query = "SELECT id FROM teachers WHERE id = ? AND sign_up_status = ?";
+                    if($this->adminModel->TeacherHasStatus($query, array($teacherId->value, 0))){
                         // get the details of the teacher
-                        $teacherDetails = $this->adminModel->GetTeacherById($teacherId->value);
+                        $teacherDetails = $this->adminModel->GetTeacherInfoById($teacherId->value);
                         if(!empty($teacherDetails)){
                             // delete the teacher's info
                             $this->adminModel->DeleteTeacher($teacherId->value);
@@ -984,12 +987,13 @@ class AdminController{
                     $response_array["error"] = "Invalid input";
                 } else{
                     // make sure that the teacher exists and is indeed accepted
-                    if($this->adminModel->TeacherHasStatus($teacherId->value, 1)){
+                    $query = "SELECT id FROM teachers WHERE id = ? AND sign_up_status = ?";
+                    if($this->adminModel->TeacherHasStatus($query, array($teacherId->value, 1))){
                         // get the details of the teacher
-                        $teacherDetails = $this->adminModel->GetTeacherById($teacherId->value);
+                        $teacherDetails = $this->adminModel->GetTeacherInfoById($teacherId->value);
                         if(!empty($teacherDetails)){
                             // delete the teacher's offers (if found)
-                            $teacherOffers = $this->adminModel->GetOffersByTeacherId($teacherId->value);
+                            $teacherOffers = $this->adminModel->GetOffersIdsByTeacherId($teacherId->value);
                             if(!empty($teacherOffers)){
                                 foreach($teacherOffers as $offer){
                                     // delete the offer's ratings (if found)

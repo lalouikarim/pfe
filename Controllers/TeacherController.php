@@ -53,7 +53,8 @@ class TeacherController{
             // the user must be a teacher
             if($accountModel->role === "teacher"){
                 // the teacher must be validated
-                if($this->teacherModel->GetTeacherStatus($this->teacherModel->auth->getEmail()) != 0){
+                $query = "SELECT id FROM teachers WHERE id = ? AND sign_up_status = ?";
+                if($this->teacherModel->TeacherHasStatus($query, array($this->teacherModel->GetTeacherId($this->teacherModel->auth->getUserId())[0]["id"], 1))){
                     return true;
                 }
             }
@@ -183,7 +184,7 @@ class TeacherController{
                     // get the teacher id
                     $teacherId = $this->teacherModel->GetTeacherId($this->teacherModel->auth->getUserId());
                     // retrieve the teacher's offers
-                    $teacherOffers = $this->teacherModel->RetrieveTeacherOffers($teacherId[0]["id"], $status->value);
+                    $teacherOffers = $this->teacherModel->RetrieveOffers($teacherId[0]["id"], array($status->value, $teacherId[0]["id"]));
                     if(empty($teacherOffers)){
                         $response_array["offers_html"] = "Pas d'annonces de cette catégorie";
                     } else{

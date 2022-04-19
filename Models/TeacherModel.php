@@ -15,15 +15,6 @@ class TeacherModel extends AccountModel{
         $stmt->execute();
     }
 
-    // get the status of a teacher's account
-    public function GetTeacherStatus($usernameOrEmail){
-        $stmt = $this->dbconn->prepare("SELECT sign_up_status FROM teachers WHERE user_id = (SELECT id FROM users WHERE username = :username_or_email OR email = :username_or_email)");
-        $stmt->bindParam(":username_or_email", $usernameOrEmail);
-        $stmt->execute();
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        return $result[0]["sign_up_status"];
-    }
-
     // check if an offer's details already exist
     public function OfferDetailsExist($columnsValues){
         $stmt = $this->dbconn->prepare("SELECT id FROM offers WHERE teacher_id = :teacher_id AND state = :state AND commune = :commune AND level = :level AND subject = :subject AND price = :price");
@@ -42,7 +33,7 @@ class TeacherModel extends AccountModel{
         }
     }
 
-    // get the teacher id
+    // get the teacher id using the user id
     public function GetTeacherId($userId){
         $stmt = $this->dbconn->prepare("SELECT id FROM teachers WHERE user_id = :user_id");
         $stmt->bindParam(":user_id", $userId);
@@ -64,17 +55,8 @@ class TeacherModel extends AccountModel{
         $stmt->execute();
     }
 
-    // retrieve the teacher' offer's number of each category
-    public function OfferCategoriesNumber($teacherId){
-        $stmt = $this->dbconn->prepare("SELECT SUM(IF(status = 0, 1, 0)) AS pending, SUM(IF(status = 1, 1, 0)) AS validated, SUM(IF(status = 2, 1, 0)) AS refused FROM offers WHERE teacher_id = :teacher_id");
-        $stmt->bindParam(":teacher_id", $teacherId);
-        $stmt->execute();
-        $offersNumber = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        return $offersNumber;
-    }
-
     // retrieve a category's teacher's offers
-    public function RetrieveTeacherOffers($teacherId, $status){
+    public function RetrieveTeacherOffersDetails($teacherId, $status){
         // retrieve the offers
         $stmt = $this->dbconn->prepare("SELECT * FROM offers WHERE teacher_id = :teacher_id AND status = :status");
         $stmt->bindParam(":teacher_id", $teacherId);
@@ -82,15 +64,6 @@ class TeacherModel extends AccountModel{
         $stmt->execute();
         $offersList = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return $offersList;
-    }
-
-    // get an offer's refusal info
-    public function GetOfferRefusal($offerId){
-        $stmt = $this->dbconn->prepare("SELECT * FROM offers_refusals WHERE offer_id = :offer_id");
-        $stmt->bindParam(":offer_id", $offerId);
-        $stmt->execute();
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        return $result;
     }
 
     // check if the offer can be updated (modified or deleted) by a teacher
@@ -125,36 +98,6 @@ class TeacherModel extends AccountModel{
         $stmt->bindParam(":subject", $columnsValues["subject"]);
         $stmt->bindParam(":price", $columnsValues["price"]);
         $stmt->bindParam(":offer_id", $columnsValues["offer_id"]);
-        $stmt->execute();
-    }
-
-    // get the status of an offer
-    public function GetOfferStatus($offerId){
-        $stmt = $this->dbconn->prepare("SELECT status FROM offers WHERE id = :offer_id");
-        $stmt->bindParam(":offer_id", $offerId);
-        $stmt->execute();
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        return $result[0]["status"];
-    }
-
-    // delete an offer's rating details
-    public function DeleteOfferRatings($offerId){
-        $stmt = $this->dbconn->prepare("DELETE FROM ratings WHERE offer_id = :offer_id");
-        $stmt->bindParam(":offer_id", $offerId);
-        $stmt->execute();
-    }
-
-    // delete an offer's refusal info
-    public function DeleteOfferRefusal($offerId){
-        $stmt = $this->dbconn->prepare("DELETE FROM offers_refusals WHERE offer_id = :offer_id");
-        $stmt->bindParam(":offer_id", $offerId);
-        $stmt->execute();
-    }
-
-    // delete an offer
-    public function DeleteOffer($offerId){
-        $stmt = $this->dbconn->prepare("DELETE FROM offers WHERE id = :id");
-        $stmt->bindParam(":id", $offerId);
         $stmt->execute();
     }
 } 

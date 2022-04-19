@@ -50,6 +50,104 @@ class AccountModel{
             return $result[0]["password"];
         };
     }
+
+    // retrieve the offer's number of each category
+    public function OfferCategoriesNumber($teacherId){
+        // this is in case the teacher controller called this method
+        if($teacherId !== "all"){
+            $whereClause = " WHERE teacher_id = :teacher_id";
+        } else{
+            $whereClause = "";
+        }
+
+        $stmt = $this->dbconn->prepare("SELECT SUM(IF(status = 0, 1, 0)) AS pending, SUM(IF(status = 1, 1, 0)) AS validated, SUM(IF(status = 2, 1, 0)) AS refused FROM offers" . $whereClause);
+        $stmt->bindParam(":teacher_id", $teacherId);
+        $stmt->execute();
+        $offersNumber = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $offersNumber;
+    }
+
+    // retrieve all accepted offers
+    public function RetrieveOffers($teacherId, $params){
+        // this is in case the teacher controller called this method
+        if($teacherId !== "all"){
+            $whereClause = " AND teacher_id = ?";
+        } else{
+            $whereClause = "";
+        }
+
+       // retrieve the offers
+       $stmt = $this->dbconn->prepare("SELECT * FROM offers WHERE status = ?" . $whereClause);
+       $stmt->execute($params);
+       $offersList = $stmt->fetchAll(PDO::FETCH_ASSOC);
+       return $offersList;
+    }
+
+    // retrieve an offer's teacher info
+    public function RetrieveOfferTeacherInfo($offerId){
+        if($this->auth->isLoggedIn())
+        $stmt = $this->dbconn->prepare("SELECT users.email, users.username, teachers.first_name, teachers.last_name, teachers.phone, teachers.card_photo, teachers.teacher_photo, teachers.cv_link FROM offers INNER JOIN teachers ON offers.teacher_id = teachers.id INNER JOIN users ON teachers.user_id = users.id WHERE offers.id = :offer_id");
+        $stmt->bindParam(":offer_id", $offerId);
+        $stmt->execute();
+        $teacherInfo = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $teacherInfo;
+    }
+
+    // check if an offer has a given status
+    public function OfferHasStatus($offerId, $status){
+        $stmt = $this->dbconn->prepare("SELECT id FROM offers WHERE id = :id AND status = :status");
+        $stmt->bindParam(":id", $offerId);
+        $stmt->bindParam(":status", $status);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if(empty($result)){
+            return false;
+        } else{
+            return true;
+        }
+    }
+
+    // get the offer refusal info
+    public function GetOfferRefusal($offerId){
+        $stmt = $this->dbconn->prepare("SELECT * FROM offers_refusals WHERE offer_id = :offer_id");
+        $stmt->bindParam(":offer_id", $offerId);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $result;
+    }
+
+    // check if a teacher has a given status
+    public function TeacherHasStatus($query, $param){
+        $stmt = $this->dbconn->prepare($query);
+        $stmt->execute($param);
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if(empty($result)){
+            return false;
+        } else{
+            return true;
+        }
+    }
+
+    // delete an offer's rating details
+    public function DeleteOfferRatings($offerId){
+        $stmt = $this->dbconn->prepare("DELETE FROM ratings WHERE offer_id = :offer_id");
+        $stmt->bindParam(":offer_id", $offerId);
+        $stmt->execute();
+    }
+
+    // delete an offer's refusal info
+    public function DeleteOfferRefusal($offerId){
+        $stmt = $this->dbconn->prepare("DELETE FROM offers_refusals WHERE offer_id = :offer_id");
+        $stmt->bindParam(":offer_id", $offerId);
+        $stmt->execute();
+    }
+
+    // delete an offer
+    public function DeleteOffer($offerId){
+        $stmt = $this->dbconn->prepare("DELETE FROM offers WHERE id = :id");
+        $stmt->bindParam(":id", $offerId);
+        $stmt->execute();
+    }
 }
 
 ?>

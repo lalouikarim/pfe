@@ -229,18 +229,14 @@ class AccountController{
                     // verify that the provided password and the hashed one match
                     // this is to not provide the teacher's info without the appropriate password
                     if(password_verify($password->value, $storedPassword)){
-                        // require the teacher model
-                        require "../Models/TeacherModel.php";
-                        // create a teacher model
-                        $teacherModel = new TeacherModel();
-
                         // allow login only to validated teachers
-                        if($teacherModel->GetTeacherStatus($usernameOrEmail->value) == 0){
-                            $response_array["error"] = "votre compte est en attente de validation par un admin";
-                        } else{
+                        $query = "SELECT id FROM teachers WHERE user_id = (SELECT id FROM users WHERE username = ? OR email = ?) AND sign_up_status = ?";
+                        if($this->accountModel->TeacherHasStatus($query, array($usernameOrEmail->value, $usernameOrEmail->value, 1))){
                             $canLogin = true;
                             // redirect the student to the teacher to their panel
                             $response_array["redirect_url"] = "http://localhost/pfe/Views/TeacherPanelView.html";
+                        } else{
+                            $response_array["error"] = "votre compte est en attente de validation par un admin";
                         }
                     } else{
                         $response_array["error"] = "Votre nom d'utilisateur/email et votre mot de passe ne correspondent pas<br>";
