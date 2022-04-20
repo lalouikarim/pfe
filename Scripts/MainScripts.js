@@ -1,3 +1,14 @@
+function LogOut(){
+    var dataString = "&action=logout";
+    $.ajax({
+        type: "POST",
+        url: "Controllers/AccountController.php",
+        data: dataString,
+        success: function (data) {
+            window.location.replace("");
+        }
+    });
+}
 //script for btn products details 
 function showbtn(id) {
 // var mybtn = document.getElementById("btn");

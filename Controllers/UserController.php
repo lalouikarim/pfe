@@ -55,7 +55,7 @@ class UserController{
             if($this->userModel->auth->isLoggedIn()){
                 $navbar .= "
                 <li class='nav-item '>
-                    <a class='nav-link' href=''>Se déconnecter <i class='fas fa-sign-out-alt'></i> </a>
+                    <a class='nav-link' onclick='LogOut()'>Se déconnecter <i class='fas fa-sign-out-alt'></i> </a>
                 </li>";  
             }
             $navbar .= "
