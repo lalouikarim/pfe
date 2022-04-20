@@ -192,7 +192,8 @@ class AdminController{
                     $response_array["error"] = "Invalid status";
                 } else{
                     // retrieve all offers
-                    $allOffers = $this->adminModel->RetrieveOffers("all", array($status->value));
+                    $query = "SELECT * FROM offers WHERE status = ?";
+                    $allOffers = $this->adminModel->RetrieveOffers($query, array($status->value));
                     if(empty($allOffers)){
                         $response_array["offers_html"] = "Pas d'annonces de cette catégorie";
                     } else{

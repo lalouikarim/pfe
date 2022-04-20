@@ -67,17 +67,10 @@ class AccountModel{
         return $offersNumber;
     }
 
-    // retrieve all accepted offers
-    public function RetrieveOffers($teacherId, $params){
-        // this is in case the teacher controller called this method
-        if($teacherId !== "all"){
-            $whereClause = " AND teacher_id = ?";
-        } else{
-            $whereClause = "";
-        }
-
+    // retrieve offers
+    public function RetrieveOffers($query, $params){
        // retrieve the offers
-       $stmt = $this->dbconn->prepare("SELECT * FROM offers WHERE status = ?" . $whereClause);
+       $stmt = $this->dbconn->prepare($query);
        $stmt->execute($params);
        $offersList = $stmt->fetchAll(PDO::FETCH_ASSOC);
        return $offersList;

@@ -184,7 +184,8 @@ class TeacherController{
                     // get the teacher id
                     $teacherId = $this->teacherModel->GetTeacherId($this->teacherModel->auth->getUserId());
                     // retrieve the teacher's offers
-                    $teacherOffers = $this->teacherModel->RetrieveOffers($teacherId[0]["id"], array($status->value, $teacherId[0]["id"]));
+                    $query = "SELECT * FROM offers WHERE status = ? AND teacher_id = ?";
+                    $teacherOffers = $this->teacherModel->RetrieveOffers($query, array($status->value, $teacherId[0]["id"]));
                     if(empty($teacherOffers)){
                         $response_array["offers_html"] = "Pas d'annonces de cette catégorie";
                     } else{
