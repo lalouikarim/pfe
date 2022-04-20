@@ -11,7 +11,13 @@ function SignIn(){
             success: function (data) {
                 data = JSON.parse(data);
                 if(data["signed_in"] === true){
-                    window.location.replace(data["redirect_url"]);
+                    var url = new URL(window.location.href);
+                    var req = url.searchParams.get("req");
+                    if(req == null){
+                        window.location.replace(data["redirect_url"]);
+                    } else{
+                        window.close();
+                    }
                 } else{
                     $("#sign_in_error").html(data["error"]);
                 }
@@ -19,6 +25,16 @@ function SignIn(){
         });
         e.preventDefault();
     });
+}
+
+function SignUpLink(){
+    var url = new URL(window.location.href);
+    var req = url.searchParams.get("req");
+    if(req == null){
+        window.location.replace("http://localhost/pfe/Views/SignUpView.html");
+    } else{
+        window.location.replace("http://localhost/pfe/Views/SignUpView.html?req=" + req);
+    }
 }
 
 function ShowCamera(divId) {
@@ -69,7 +85,13 @@ function SignUp(accountType){
             success: function (data) {
                 data = JSON.parse(data);
                 if(data["signed_up"] === true || data["already_loggedin"] === true){
-                    window.location.replace(data["redirect_url"]);
+                    var url = new URL(window.location.href);
+                    var req = url.searchParams.get("req");
+                    if(req == null){
+                        window.location.replace(data["redirect_url"]);
+                    } else{
+                        window.location.replace("http://localhost/pfe/Views/SignInView.html?req=" + req);
+                    }
                 } else{
                     for(section in data){
                         $("#"+section).html(data[section]);
@@ -79,4 +101,14 @@ function SignUp(accountType){
         });
         e.preventDefault();
     });
+}
+
+function SignInLink(){
+    var url = new URL(window.location.href);
+    var req = url.searchParams.get("req");
+    if(req == null){
+        window.location.replace("http://localhost/pfe/Views/SignInView.html");
+    } else{
+        window.location.replace("http://localhost/pfe/Views/SignInView.html?req=" + req);
+    }
 }
