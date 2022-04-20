@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css">
+    <script src='https://www.google.com/recaptcha/api.js'></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" 
+    integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" 
+    crossorigin="anonymous">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+    <title>Acceuil</title>
+    <link rel='stylesheet' href='Styles/MainStyles.css'>
+    <script>
+        window.onload = function(){
+            $.ajax({
+                type: "POST",
+                url: "Controllers/UserController.php",
+                data: "&action=displayhomepage",
+                success: function (data) {
+                    data = JSON.parse(data);
+                    $("#navbar").html(data["navbar"]);
+                    $("#offers_cards").html(data["offers_html"]);
+                    $("#footer").html(data["footer"]);
+                }
+            });
+        };
+    </script>
+    <script src="Scripts/MainScripts.js"></script>
+</head>
+<body>
+    <div class="container-full overlay" id="container">
+        <!--navbar-->
+        <nav class="navbar navbar-expand-md navbar-dark" style="background: -webkit-linear-gradient(left, #3931af, #00c6ff);" id="navbar"></nav> 
+        <div class="container main-page">
+          <!--row4-->
+          <div class="container offers">
+            <div class="cards">   
+              <div class="offer-cards" id="offers_cards"></div>
+            </div>  
+          </div>
+          <br><br>
+          <br>
+        </div>
+          <!--footer-->
+        <div class="container-full footer" id="footer"></div>
+    </div>
+</body>
+</html>
