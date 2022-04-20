@@ -1,0 +1,290 @@
+body {
+    background-color: #F2F4F6;margin:0px;padding:0px;
+}
+    .scm-ul {
+        list-style-type:none;margin-top:10px;
+    }
+.scm-ul li {
+    display: inline-block; margin:10px;
+}
+.fa-facebook {
+    font-size:x-large;
+    color: #4267B2;
+}
+.fb {
+    color: #4267B2;
+}
+.fb:hover {
+    background-color: #4267B2;color:white
+}
+.fa-instagram {
+    font-size: x-large;
+    color: #FD1D1D;
+}
+.insta {
+    color: #FD1D1D;
+}
+.insta:hover {
+    background-color: #FD1D1D;color: white;
+}
+.fa-envelope {
+    font-size:x-large;
+    color: #B23121;
+}
+.gm {
+    color: #B23121;
+}
+.gm:hover {
+    background-color: #B23121;color: white;
+}
+.fa-phone-square {
+    font-size:x-large;
+}
+.num {
+    color: black;
+}
+.num:hover {
+    background-color: black;color:white
+} 
+/*.nav1 {text-align:right}*/
+.navbar-brand {
+    font-family: 'Arvo', serif;margin-bottom:5px
+}
+.cards {
+    white-space: nowrap;margin-top: 10px;
+}
+.options a {
+    margin-left: 10px;text-decoration: none;
+}
+.card {
+    display: inline-block;margin: 5px;
+}
+.card:hover {
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    transition: 300ms ease-in-out;
+}
+.card img {
+    border-radius: 0px;
+}
+.centring {
+    margin: auto; display: flex;justify-content: center; align-items: center;
+}
+.txt-center {
+    text-align:center;
+}
+.popup-hide { 
+    position: fixed;
+    filter: drop-shadow(0 0 500px rgb(0, 0, 0));
+    padding: 10px;
+    top: 55%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    transition: 150ms ease-in-out;
+    border: solid 1px #ededed;
+    border-radius: 5px;
+    z-index: 10;
+    background-color: white;
+    width: 800px;
+    max-width: 80%;
+    /*display: none;*/
+    overflow-y: auto;
+    overflow-x: hidden;
+    height:400px;
+}
+.scroll-popup {
+    position: relative;
+}
+.sections {
+    overflow: auto;
+}
+.section {
+    padding-top:100px;padding-bottom:100px ;height: 500px;
+}
+.filter-hide{ 
+    position:fixed;
+    filter: drop-shadow(0 0 500px rgb(0, 0, 0));
+    padding: 30px;
+    top: 60%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0) ;
+    transition: 100ms ease-in-out;
+    border : solid 1px #ededed;
+    border-radius: 10px;
+    z-index: 10;
+    background-color: white;
+    width: 800px;
+    max-width: 80%;
+    /*display: none;*/
+    overflow-y: auto;
+    overflow-x: hidden;
+    height:400px;
+}
+.cardimg {
+    position:fixed;
+    padding: 5px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0) ;
+    transition: 300ms ease-in-out;
+    border-radius: 10px;
+    z-index: 10;
+    background-color:white;   
+    width: 600px;
+    max-width: 80%;
+    height:600px;
+}
+.cardimg:hover {
+    cursor: zoom-out;
+}
+/* scrolling left and right */
+.fa-chevron-circle-left {
+    font-size:40px;
+}
+.fa-chevron-circle-right {
+    font-size:40px;
+}
+/* rubrique de mélange */
+.rubs {
+    white-space: nowrap;
+}
+.rub {
+    display: inline-block;margin:15px;
+}
+.card-grid {
+    width: 356.66px;
+}
+.image-grid-container {
+    display: grid;
+    /* For 2 columns */
+    grid-template-columns: auto auto;
+}
+/* scrooll up btn */
+#myBtn {
+    display: none; /* Hidden by default */
+    position: fixed; /* Fixed/sticky position */
+    bottom: 20px; /* Place the button at the bottom of the page */
+    right: 30px; /* Place the button 30px from the right */
+    z-index: 99; /* Make sure it does not overlap */
+    border: none; /* Remove borders */
+    outline: none; /* Remove outline */
+    background-color: red; /* Set a background color */
+    color: white; /* Text color */
+    cursor: pointer; /* Add a mouse pointer on hover */
+    padding: 15px; /* Some padding */
+    border-radius: 10px; /* Rounded corners */
+    font-size: 18px; /* Increase font size */
+}
+.post-action{
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+.like,.unlike{
+    border: 0;
+    background: none;
+    letter-spacing: 1px;
+    color: lightseagreen;
+}
+.like,.unlike:hover{
+    cursor: pointer;
+}
+.br-widget a:first-child{
+    display: none;
+}
+.pagination a {
+    color: black;
+    float: left;
+    padding: 8px 16px;
+    text-decoration: none;
+}
+.pagination a.btn-active {
+    color: white;
+}
+.page {
+    display: none;
+}
+.page-active-offers {
+    display: block;
+}
+.btn-panier span {
+    margin : 5px
+}
+.title-block {
+    display:block
+}
+.title-border {
+    border: 2px solid ; margin-top: -15px;overflow: hidden;margin-left:120px;
+}
+.titles {
+    padding-right : 20px;margin-left:5px;font-family: 'Roboto', sans-serif;
+} 
+.navbar-2nd {
+    background-color : white;overflow:hidden
+}
+.btn-2ndnav-2 a {
+    padding:40px 5px ;
+}
+.offer-cards {
+    overflow-x : auto
+}
+.search {
+    margin-top:6px;height:40px
+}
+.main-page {
+    overflow:hidden
+}
+.offers {
+    background-color :white; padding: 20px;border-radius:2px;
+}
+.footer {
+    overflow:hidden;
+    padding: 20px;
+    background: -webkit-linear-gradient(left, #3931af, #00c6ff);
+}
+.footer a {
+    text-decoration: none;
+    background: #f8f9fa;
+    color: #383d41;
+}
+.footer-scm a {
+    margin : 5px;
+}
+.test {
+    position: relative;
+}
+.test-span {
+    position: absolute;
+    left: 28px;
+    bottom: 40px;
+    padding: 0 15px;
+    line-height: 34px;
+    border-radius:5px;
+    background-color: rgb(255,255,255);
+    background-color: rgba(255,255,255, 0.4);
+    overflow: hidden;
+    -o-text-overflow: ellipsis;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+}
+.test-span:hover {
+    background-color: rgb(255,255,255);
+    background-color: rgba(255,255,255,1);
+}
+.test-span a {
+    font-style: bold;font-family: 'Bebas Neue', cursive;
+}
+.btn-offer {
+    transform:scale(0)
+}
+.languages-options {
+    outline-style:none;border-bottom:solid 1px;color:white;margin-top:5px
+}
+.fa-chevron-circle-right {
+    font-size:10px
+}
+.fa-chevron-circle-left {
+    font-size:10px
+}
+.card-text {
+    margin-left: 10px;
+}
