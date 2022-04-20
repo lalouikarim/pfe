@@ -78,7 +78,6 @@ class AccountModel{
 
     // retrieve an offer's teacher info
     public function RetrieveOfferTeacherInfo($offerId){
-        if($this->auth->isLoggedIn())
         $stmt = $this->dbconn->prepare("SELECT users.email, users.username, teachers.first_name, teachers.last_name, teachers.phone, teachers.card_photo, teachers.teacher_photo, teachers.cv_link FROM offers INNER JOIN teachers ON offers.teacher_id = teachers.id INNER JOIN users ON teachers.user_id = users.id WHERE offers.id = :offer_id");
         $stmt->bindParam(":offer_id", $offerId);
         $stmt->execute();
