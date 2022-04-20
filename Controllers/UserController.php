@@ -36,10 +36,10 @@ class UserController{
             if(!$this->userModel->auth->isLoggedIn()){
                 $navbar .= "
                 <li class='nav-item'>
-                    <a class='nav-link' href=''>Se Connecter</a>
+                    <a class='nav-link' href='Views/SignInView.html'>Se Connecter</a>
                 </li>
                 <li class='nav-item'>
-                    <a class='nav-link' href=''>S'inscrire</a>
+                    <a class='nav-link' href='Views/SignUpView.html'>S'inscrire</a>
                 </li>";
             }
 
