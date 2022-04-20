@@ -14,6 +14,9 @@ class UserController{
             case "displayhomepage":
                 $this->DisplayOffers();
                 break;
+            case "displayteacherdetailspopup":
+                $this->DisplayTeacherDetails();
+                break;
             default:
                 break;
         }
@@ -145,7 +148,7 @@ class UserController{
                 $responseArray["offers_html"] .= "
                         <div class='card offer-card' style='width:250px' onmouseover='showbtn( " . $offer["offer_id"] . ")' onmouseout='hidebtn( " . $offer["offer_id"] . ")'>
                             <div class='d-none d-lg-block card-img-overlay' id='btn-card-" . $offer["offer_id"] . "'>
-                                <button class='btn-offer btn-offer-details btn btn-block btn-primary btn-sm' id='show_teacher_details_popup_" . $offer["offer_id"] . "'>Détails du prof</button>
+                                <button class='btn-offer btn-offer-details btn btn-block btn-primary btn-sm' id='show_teacher_details_popup_" . $offer["offer_id"] . "' onclick='DisplayTeacherDetailsPopup(" . $offer["offer_id"] . ")'>Détails du prof</button>
                             </div>
                             <div class='card-body'>";
                 if($offer["level"] === "primary"){
@@ -174,7 +177,7 @@ class UserController{
                                 </span>
                                 <!-- this btn is only visible on small screens -->
                                 <div class ='d-sm-block d-md-block d-lg-none' id='btn-card-phone-" . $offer["offer_id"] . "'>
-                                    <button class='btn btn-block btn-outline-primary btn-sm' id='show_teacher_details_popup_phone_" . $offer["offer_id"] . "'>Détails du prof</button>
+                                    <button class='btn btn-block btn-outline-primary btn-sm' id='show_teacher_details_popup_phone_" . $offer["offer_id"] . "' onclick='DisplayTeacherDetailsPopup(" . $offer["offer_id"] . ")'>Détails du prof</button>
                                 </div>
                             </div>
                             <div class='popup-hide' id='teacher_details_popup_" . $offer["offer_id"] . "'></div>
@@ -202,6 +205,43 @@ class UserController{
         // display the navbar and the footer
         $responseArray["navbar"] = $this->DisplayNavbar();
         $responseArray["footer"] = $this->DisplayFooter();
+
+        echo json_encode($responseArray);
+    }
+
+    // display an offer's teacher details
+    private function DisplayTeacherDetails(){
+        $responseArray["logged_in"] = false;
+        $responseArray["error"] = "";
+        if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["offer_id"])){
+            // sanitize the user's input
+            $offerId = new Input($_POST["offer_id"]);
+            $offerId->Sanitize();
+
+            // ensure a valid id format
+            if(!preg_match("/^(0|[1-9][0-9]*)$/", $offerId->value)){
+                $responseArray["error"] = "Invalid input";
+            } else{
+                if($this->userModel->auth->isLoggedIn()){
+                    // indicate that the user is logged in
+                    $responseArray["logged_in"] = true;
+
+                    // retrieve the teacher's details
+                    $teacherDetails = $this->userModel->RetrieveOfferTeacherInfo($offerId->value);
+                    if(empty($teacherDetails)){
+                        $responseArray["error"] = "L'enseignant n'existe pas";
+                    } else{
+                        $responseArray["teacher_details_html"] = "
+                        <button class='btn btn-primary' id='teacher_details_hidepopup_" . $offerId->value . "' onclick=" . '"' . "hidepopup('teacher_details_popup_" .  $offerId->value . "')" . '"' . ">&times;</button>
+                        <p>" . $teacherDetails[0]["last_name"] . " " . $teacherDetails[0]["first_name"] . "</p>
+                        <p>" . $teacherDetails[0]["email"] . "</p>
+                        <p>" . $teacherDetails[0]["phone"] . "</p>
+                        <p><a href='" . $teacherDetails[0]["cv_link"] . "' target='_blank'>Cliquez ici pour voir le cv</a></p>
+                        <img src='Images/Teachers/" . md5($teacherDetails[0]["teacher_photo"]) . ".jpeg' alt='Teacher Photo' style='height:200px; width:300px;'>";
+                    }
+                }
+            }
+        }
 
         echo json_encode($responseArray);
     }
