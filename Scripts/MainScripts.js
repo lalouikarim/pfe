@@ -66,3 +66,33 @@ function pagination(page, section){
         }
     }
 }
+
+function showpopup(params) {
+    var popup=document.getElementById(params);
+    popup.style.transform = 'translate(-50%, -50%) scale(1)';
+}
+
+function hidepopup(params) {
+    var popup=document.getElementById(params);       
+    popup.style.transform = 'translate(-50%, -50%) scale(0)';
+}
+
+function DisplayTeacherDetailsPopup(offerId){
+    var dataString = "&action=displayteacherdetailspopup&offer_id=" + offerId;
+    $.ajax({
+        type: "POST",
+        url: "Controllers/UserController.php",
+        data: dataString,
+        success: function (data) {
+            data = JSON.parse(data);
+            if(data["logged_in"] === false){
+                window.open('Views/SignInView.html?req=viewteacher', '_blank', 'width=1000, height=400, top=200, left=300');
+            } else if(data["error"] != ""){
+                alert(data["error"]);
+            } else{
+                showpopup("teacher_details_popup_" + offerId);
+                $("#teacher_details_popup_" + offerId).html(data["teacher_details_html"]);
+            }
+        }
+    });
+}
