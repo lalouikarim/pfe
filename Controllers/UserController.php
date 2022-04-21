@@ -17,6 +17,9 @@ class UserController{
             case "displayteacherdetailspopup":
                 $this->DisplayTeacherDetails();
                 break;
+            case "rateoffer":
+                $this->RateOffer();
+                break;
             default:
                 break;
         }
@@ -147,7 +150,7 @@ class UserController{
                 }
                 $responseArray["offers_html"] .= "
                         <div class='card offer-card' style='width:250px' onmouseover='showbtn( " . $offer["offer_id"] . ")' onmouseout='hidebtn( " . $offer["offer_id"] . ")'>
-                            <div class='d-none d-lg-block card-img-overlay' id='btn-card-" . $offer["offer_id"] . "'>
+                            <div class='d-none d-lg-block' id='btn-card-" . $offer["offer_id"] . "'>
                                 <button class='btn-offer btn-offer-details btn btn-block btn-primary btn-sm' id='show_teacher_details_popup_" . $offer["offer_id"] . "' onclick='DisplayTeacherDetailsPopup(" . $offer["offer_id"] . ")'>Détails du prof</button>
                             </div>
                             <div class='card-body'>";
@@ -162,6 +165,20 @@ class UserController{
                 }
                 $responseArray["offers_html"] .= "
                                 <h6>" . $offer["subject"] . " - " . $offer["level"] . "</h6>
+                                <div class='post-action'>
+                                    <div class='d-inline-flex'>
+                                        <select class='avg-rating' id='offer_rating_" . $offer["offer_id"] . "' data-id='offer_rating_" . $offer["offer_id"] . "'>
+                                            <option value='0'>0</option>
+                                            <option value='1' >1</option>
+                                            <option value='2' >2</option>
+                                            <option value='3' >3</option>
+                                            <option value='4' >4</option>
+                                            <option value='5' >5</option>
+                                        </select>
+                                        <small class='card-text' id='offer_rates_number_" . $offer["offer_id"] . "'><i class='fas fa-users'></i> 0</small>
+                                        <div style='clear: both;'></div>
+                                    </div>
+                                </div>
                                 <span class='card-offer-details'>
                                     <small>" . $offer["last_name"] . " </small>
                                     <small>" . $offer["first_name"] . "</small>
@@ -179,8 +196,29 @@ class UserController{
                                 <div class ='d-sm-block d-md-block d-lg-none' id='btn-card-phone-" . $offer["offer_id"] . "'>
                                     <button class='btn btn-block btn-outline-primary btn-sm' id='show_teacher_details_popup_phone_" . $offer["offer_id"] . "' onclick='DisplayTeacherDetailsPopup(" . $offer["offer_id"] . ")'>Détails du prof</button>
                                 </div>
+                                <div class ='d-sm-block d-md-block d-lg-none' id='rate-btn-card-phone-" . $offer["offer_id"] . "'>
+                                    <button class='btn btn-block btn-outline-primary btn-sm' id='rate_offer_popup_phone_" . $offer["offer_id"] . "' onclick=" . '"' . "showpopup('rate_offer_" . $offer["offer_id"] . "_popup')" . '"' . ">Noter annonce</button>
+                                </div>
+                            </div>
+                            <div class='d-none d-lg-block' id='rate-btn-card-" . $offer["offer_id"] . "'>
+                                <button class='btn-offer btn-offer-details btn btn-block btn-primary btn-sm' id='rate_offer_popup_" . $offer["offer_id"] . "' onclick=" . '"' . "showpopup('rate_offer_" . $offer["offer_id"] . "_popup')" . '"' . ">Noter annonce</button>
                             </div>
                             <div class='popup-hide' id='teacher_details_popup_" . $offer["offer_id"] . "'></div>
+                            <div class='popup-hide' id='rate_offer_" . $offer["offer_id"] . "_popup'>
+                                <button class='btn btn-primary btn-sm btn-block sticky-top' id='hide_rate_offer_popup_" . $offer["offer_id"] . "' onclick=" . '"' . "hidepopup('rate_offer_" . $offer["offer_id"] . "_popup')" . '"' . ">&times;</button>
+                                <hr>
+                                <div class='post-action'>
+                                    <select class='user-rating' id='user_offer_rating_" . $offer["offer_id"] . "' data-id='user_offer_rating_" . $offer["offer_id"] . "'>
+                                        <option value='0'>0</option>
+                                        <option value='1' >1</option>
+                                        <option value='2' >2</option>
+                                        <option value='3' >3</option>
+                                        <option value='4' >4</option>
+                                        <option value='5' >5</option>
+                                    </select>
+                                    <div style='clear: both;'></div>
+                                </div>
+                            </div>
                         </div>";
 
                 // indicate that an offer has been echoed
@@ -238,6 +276,67 @@ class UserController{
                         <p>" . $teacherDetails[0]["phone"] . "</p>
                         <p><a href='" . $teacherDetails[0]["cv_link"] . "' target='_blank'>Cliquez ici pour voir le cv</a></p>
                         <img src='Images/Teachers/" . md5($teacherDetails[0]["teacher_photo"]) . ".jpeg' alt='Teacher Photo' style='height:200px; width:300px;'>";
+                    }
+                }
+            }
+        }
+
+        echo json_encode($responseArray);
+    }
+
+    // rate an offer
+    private function RateOffer(){
+        $responseArray["logged_in"] = false;
+        $responseArray["error"] = "";
+        if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["offer_id"]) && isset($_POST["offer_rating"])){
+            // sanitize the user's input
+            $offerId = new Input($_POST["offer_id"]);
+            $offerId->Sanitize();
+            $rating = new Input($_POST["offer_rating"]);
+            $rating->Sanitize();
+
+            // ensure a valid id format
+            if(!preg_match("/^(0|[1-9][0-9]*)$/", $offerId->value)){
+                $responseArray["error"] = "Invalid input";
+            } 
+            // ensure a valid rating format
+            else if(!preg_match("/^(1|2|3|4|5)$/", $rating->value)){
+                $responseArray["error"] = "Veuillez choisir une note valide";
+            } else{
+                if($this->userModel->auth->isLoggedIn()){
+                    // indicate that the user is logged in
+                    $responseArray["logged_in"] = true;
+                    $userCanRate = true;
+
+                    // set the account role
+                    $this->userModel->SetAccountRole($this->userModel->auth->getEmail());
+
+                    // a teacher can't rate their own offers
+                    if($this->userModel->role === "teacher"){
+                        if($this->userModel->TeacherOwnsOffer($offerId->value, $this->userModel->auth->getUserId())){
+                            $responseArray["error"] = "Vous ne pouvez pas noter vos propres annonces";
+                            $userCanRate = false;
+                        }
+                    }
+
+                    if($userCanRate){
+                        // the offer must be validated
+                        if($this->userModel->OfferHasStatus($offerId->value, 1)){
+                            // insert the rating
+                            $this->userModel->InsertOfferRating($this->userModel->auth->getUserId(), $offerId->value, $rating->value);
+
+                            // retrieve the new rating details of the offer
+                            $offerRatings = $this->userModel->RetrieveOfferRatings($offerId->value);
+                            if(empty($offerRatings)){
+                                $responseArray["avg_rating"] = 0;
+                                $responseArray["rates_number"] = "<small class='card-text' id='offer_rates_number_" . $offerId->value . "'><i class='fas fa-users'></i> 0</small>";
+                            } else{
+                                $responseArray["avg_rating"] = $offerRatings[0]["avg_rating"];
+                                $responseArray["rates_number"] = "<small class='card-text' id='offer_rates_number_" . $offerId->value . "'><i class='fas fa-users'></i> " . $offerRatings[0]["rates_number"] . "</small>";
+                            }
+                        } else{
+                            $responseArray["error"] = "L'annonce n'existe pas";
+                        }
                     }
                 }
             }
