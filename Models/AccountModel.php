@@ -140,6 +140,56 @@ class AccountModel{
         $stmt->bindParam(":id", $offerId);
         $stmt->execute();
     }
+
+    // check if an offer belongs to a given teacher
+    public function TeacherOwnsOffer($offerId, $userId){
+        $stmt = $this->dbconn->prepare("SELECT id FROM offers WHERE id = :offer_id AND teacher_id = (SELECT id FROM teachers WHERE user_id = :user_id)");
+        $stmt->bindParam(":offer_id", $offerId);
+        $stmt->bindParam(":user_id", $userId);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if(empty($result)){
+            return false;
+        } else{
+            return true;
+        }
+    }
+
+    // insert an offer's rating
+    public function InsertOfferRating($userId, $offerId, $rating){
+        $stmt = $this->dbconn->prepare("SELECT id FROM ratings WHERE user_id = :user_id AND offer_id = :offer_id");
+        $stmt->bindParam(":user_id", $userId);
+        $stmt->bindParam(":offer_id", $offerId);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if(empty($result)){
+            $stmt = $this->dbconn->prepare("INSERT INTO ratings (user_id, offer_id, rating) VALUES (:user_id, :offer_id, :rating)");
+            $stmt->bindParam(":user_id", $userId);
+            $stmt->bindParam(":offer_id", $offerId);
+            $stmt->bindParam(":rating", $rating);
+            $stmt->execute();
+        } else{
+            $this->UpdateOfferRating($userId, $offerId, $rating);
+        }
+    }
+
+    // update a offer's rating
+    public function UpdateOfferRating($userId, $offerId, $rating){
+        $stmt = $this->dbconn->prepare("UPDATE ratings SET rating = :rating WHERE offer_id = :offer_id AND user_id = :user_id");
+        $stmt->bindParam(":rating", $rating);
+        $stmt->bindParam(":offer_id", $offerId);
+        $stmt->bindParam(":user_id", $userId);
+        $stmt->execute();
+    }
+
+    // retrieve an offer's rating details
+    public function RetrieveOfferRatings($offerId){
+        $stmt = $this->dbconn->prepare("SELECT COUNT(id) as rates_number, ROUND(AVG(rating), 1) as avg_rating FROM ratings WHERE offer_id = :offer_id");
+        $stmt->bindParam(":offer_id", $offerId);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $result;
+    }
 }
 
 ?>
