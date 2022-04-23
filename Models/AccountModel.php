@@ -190,6 +190,16 @@ class AccountModel{
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return $result;
     }
+
+    // retrieve a user's rating of an offer
+    public function RetrieveUserOfferRating($userId, $offerId){
+        $stmt = $this->dbconn->prepare("SELECT rating FROM ratings WHERE user_id = :user_id AND offer_id = :offer_id");
+        $stmt->bindParam(":user_id" , $userId);
+        $stmt->bindParam(":offer_id" , $offerId);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $result;
+    }
 }
 
 ?>
