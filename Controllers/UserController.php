@@ -109,7 +109,10 @@ class UserController{
     private function DisplayOffers(){
         // send this array to the client
         $responseArray = [];
+        // this array holds the average rating of each offer
         $offersRatings = [];
+        // this array holds a user's rating of each offer
+        $userOfferRatings = [];
 
         // use these variables for pagination
         $offersPerPage = 0;
@@ -133,6 +136,9 @@ class UserController{
             }
 
             foreach($offersDetails as $offer){
+                // initialze the user's rating of the offer
+                $userOfferRatings[$offer["offer_id"]] = 0;
+                
                 // if it's the first offer of the page
                 if($offersPerPage === 0){
                     $responseArray["offers_html"] .= "
@@ -176,6 +182,14 @@ class UserController{
                 } else{
                     $offersRatings[$offer["offer_id"]] = $offerRatings[0]["avg_rating"];
                     $ratesNumber = $offerRatings[0]["rates_number"];
+                }
+
+                // if the user id logged in then retrieve their rating of the offer (if found)
+                if($this->userModel->auth->isLoggedIn()){
+                    $userOfferRating = $this->userModel->RetrieveUserOfferRating($this->userModel->auth->getUserId(), $offer["offer_id"]);
+                    if(!empty($userOfferRating)){
+                        $userOfferRatings[$offer["offer_id"]] = $userOfferRating[0]["rating"];
+                    }
                 }
                 $responseArray["offers_html"] .= "
                                 <div class='post-action'>
@@ -257,8 +271,9 @@ class UserController{
         $responseArray["navbar"] = $this->DisplayNavbar();
         $responseArray["footer"] = $this->DisplayFooter();
 
-        // assign the ratings array
+        // assign the ratings arrays
         $responseArray["avg_ratings"] = $offersRatings;
+        $responseArray["user_ratings"] = $userOfferRatings;
 
         echo json_encode($responseArray);
     }
