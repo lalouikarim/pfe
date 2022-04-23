@@ -97,6 +97,16 @@ function DisplayTeacherDetailsPopup(offerId){
     });
 }
 
+function DisplayAverageRating(avgRatings){
+    $('.avg-rating').each(function(index, element){
+        var id = this.id;
+        var offerId = id.split('_')[2];
+        $("#" + id).barrating({ theme: 'fontawesome-stars'});
+        $('#' + id).barrating('set', Math.floor(avgRatings[offerId]));
+        $('#' + id).barrating('readonly', true);
+    });
+}
+
 function RateOffers(){
     $(".user-rating").each(function(index, element){
         var id = this.id;
