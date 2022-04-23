@@ -107,6 +107,14 @@ function DisplayAverageRating(avgRatings){
     });
 }
 
+function DisplayUserRating(userRatings){
+    $('.user-rating').each(function(index, element){
+        var id = this.id;
+        var offerId = id.split('_')[3];
+        $('#' + id).barrating('set', Math.floor(userRatings[offerId]));
+    });
+}
+
 function RateOffers(){
     $(".user-rating").each(function(index, element){
         var id = this.id;
