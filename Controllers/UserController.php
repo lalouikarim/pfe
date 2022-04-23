@@ -109,6 +109,7 @@ class UserController{
     private function DisplayOffers(){
         // send this array to the client
         $responseArray = [];
+        $offersRatings = [];
 
         // use these variables for pagination
         $offersPerPage = 0;
@@ -164,7 +165,19 @@ class UserController{
                     $offer["level"] = "Universitaire";
                 }
                 $responseArray["offers_html"] .= "
-                                <h6>" . $offer["subject"] . " - " . $offer["level"] . "</h6>
+                                <h6>" . $offer["subject"] . " - " . $offer["level"] . "</h6>";
+
+
+                // retrieve the rating details of the offer
+                $offerRatings = $this->userModel->RetrieveOfferRatings($offer["offer_id"]);
+                if(empty($offerRatings)){
+                    $offersRatings[$offer["offer_id"]] = 0;
+                    $ratesNumber = 0;
+                } else{
+                    $offersRatings[$offer["offer_id"]] = $offerRatings[0]["avg_rating"];
+                    $ratesNumber = $offerRatings[0]["rates_number"];
+                }
+                $responseArray["offers_html"] .= "
                                 <div class='post-action'>
                                     <div class='d-inline-flex'>
                                         <select class='avg-rating' id='offer_rating_" . $offer["offer_id"] . "' data-id='offer_rating_" . $offer["offer_id"] . "'>
@@ -175,7 +188,7 @@ class UserController{
                                             <option value='4' >4</option>
                                             <option value='5' >5</option>
                                         </select>
-                                        <small class='card-text' id='offer_rates_number_" . $offer["offer_id"] . "'><i class='fas fa-users'></i> 0</small>
+                                        <small class='card-text' id='offer_rates_number_" . $offer["offer_id"] . "'><i class='fas fa-users'></i> " . $ratesNumber . "</small>
                                         <div style='clear: both;'></div>
                                     </div>
                                 </div>
@@ -243,6 +256,9 @@ class UserController{
         // display the navbar and the footer
         $responseArray["navbar"] = $this->DisplayNavbar();
         $responseArray["footer"] = $this->DisplayFooter();
+
+        // assign the ratings array
+        $responseArray["avg_ratings"] = $offersRatings;
 
         echo json_encode($responseArray);
     }
