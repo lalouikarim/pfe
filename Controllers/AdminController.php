@@ -84,15 +84,6 @@ class AdminController{
 
             // the head part of the admin panel
             $response_array["head"] = "
-            <meta charset='UTF-8'>
-            <meta http-equiv='X-UA-Compatible' content='IE=edge'>
-            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-            <link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css'>
-            <link href='https://fonts.googleapis.com/css?family=Rubik:400,700|Crimson+Text:400,400i' rel='stylesheet'>
-            <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js'></script>
-            <script src='https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js'></script>
-            <script src='https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js'></script>
-            <script src='https://unpkg.com/sweetalert/dist/sweetalert.min.js'></script>
             <script src='../Scripts/AdminScripts.js'></script>
             <title>Paneau de l'admin</title>
             <link rel='stylesheet' href='../Styles/PanelsStyles.css'>";
@@ -181,6 +172,8 @@ class AdminController{
     private function ViewOffers(){
         $response_array["valid_role"] = false;
         $response_array["offers_html"] = $response_array["error"] = "";
+        // this array holds the rating details of all offers
+        $offerRatings = [];
         if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["status"])){
             // the user must be logged in and a validated admin
             if($this->UserHasAdminPriveleges()){
@@ -329,8 +322,41 @@ class AdminController{
                                             <p>Matière: " . $offer["subject"] . "</p>
                                             <p>Prix: " . $offer["price"] . " DA
                                         </div>";
+                            // if it's a validated offer then display its rating details
+                            if($offer["status"] == 1){
+                                $offerRating = $this->adminModel->RetrieveOfferRatings($offer["id"]);
+                                if(empty($offerRating) || $offerRating[0]["avg_rating"] === null){
+                                    $offerRatings[$offer["id"]] = 0;
+                                    $ratesNumber = 0;
+                                } else{
+                                    $offerRatings[$offer["id"]] = $offerRating[0]["avg_rating"];
+                                    $ratesNumber = $offerRating[0]["rates_number"];
+                                }
+
+                                $response_array["offers_html"] .= "
+                                        <div class='col-sm-3 address-infos'>
+                                            <h4>Notes</h4>
+                                            <p>
+                                                Note moyenne: 
+                                                <div class='post-action'>
+                                                    <div class='d-inline-flex'>
+                                                        <select class='avg-rating' id='offer_rating_" . $offer["id"] . "' data-id='offer_rating_" . $offer["id"] . "'>
+                                                            <option value='0'>0</option>
+                                                            <option value='1' >1</option>
+                                                            <option value='2' >2</option>
+                                                            <option value='3' >3</option>
+                                                            <option value='4' >4</option>
+                                                            <option value='5' >5</option>
+                                                        </select>
+                                                        <div style='clear: both;'></div>
+                                                    </div>
+                                                </div>
+                                            </p>
+                                            <p>Nombre de noteurs: " . $ratesNumber . "</p>
+                                        </div>";
+                            }
                             // if it's a refused offer then display the refusal info
-                            if($offer["status"] == 2){
+                            else if($offer["status"] == 2){
                                 $refusalInfo = $this->adminModel->GetOfferRefusal($offer["id"]);
                                 if(!empty($refusalInfo)){
                                     $response_array["offers_html"] .= "
@@ -402,6 +428,9 @@ class AdminController{
                 }
             }
         }
+
+        // assign the ratings array
+        $response_array["avg_ratings"] = $offerRatings;
 
         echo json_encode($response_array);
     }
