@@ -12,13 +12,16 @@ class UserController{
     public function performAction($action){
         switch($action){
             case "displayhomepage":
-                $this->DisplayOffers();
+                $this->DisplayOffers("all", "params", "echo");
                 break;
             case "displayteacherdetailspopup":
                 $this->DisplayTeacherDetails();
                 break;
             case "rateoffer":
                 $this->RateOffer();
+                break;
+            case "searchoffers":
+                $this->SearchOffers();
                 break;
             default:
                 break;
@@ -106,7 +109,7 @@ class UserController{
     }
 
     // display offers
-    private function DisplayOffers(){
+    private function DisplayOffers($query, $queryParams, $returnOrEcho){
         // send this array to the client
         $responseArray = [];
         // this array holds the average rating of each offer
@@ -118,9 +121,15 @@ class UserController{
         $offersPerPage = 0;
         $pageNumber = 0;
 
+        // all offers
+        if($query === "all"){
+            $query = "SELECT teachers.id AS teacher_id, teachers.first_name, teachers.last_name, offers.id AS offer_id, offers.state, offers.commune, offers.level, offers.subject, offers.price FROM offers INNER JOIN teachers ON teachers.id = offers.teacher_id WHERE status = ?";
+            // the 1 represents the accepted status of an offer
+            $queryParams = array(1);
+        }
+
         // retrieve offers
-        $query = "SELECT teachers.id AS teacher_id, teachers.first_name, teachers.last_name, offers.id AS offer_id, offers.state, offers.commune, offers.level, offers.subject, offers.price FROM offers INNER JOIN teachers ON teachers.id = offers.teacher_id WHERE status = ?";
-        $offersDetails = $this->userModel->RetrieveOffers($query, array(1));
+        $offersDetails = $this->userModel->RetrieveOffers($query, $queryParams);
 
         if(empty($offersDetails)){
 
@@ -275,7 +284,12 @@ class UserController{
         $responseArray["avg_ratings"] = $offersRatings;
         $responseArray["user_ratings"] = $userOfferRatings;
 
-        echo json_encode($responseArray);
+        // either display the offers html or return it
+        if($returnOrEcho === "echo"){
+            echo json_encode($responseArray);
+        } else{
+            return $responseArray;
+        }
     }
 
     // display an offer's teacher details
@@ -370,6 +384,118 @@ class UserController{
                         }
                     }
                 }
+            }
+        }
+
+        echo json_encode($responseArray);
+    }
+
+    // filter offers
+    private function SearchOffers(){
+        $responseArray["error"] = "";
+        // this array holds the sql query parameters; the 1 represents the accepted status of an offer
+        $queryParams = array(1);
+        if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["subject"]) && isset($_POST["max_price"]) && isset($_POST["state"]) && isset($_POST["commune"]) && isset($_POST["first_name"]) && isset($_POST["last_name"])){
+            // sanitize the user's input
+            $subject = new Input($_POST["subject"]);
+            $subject->Sanitize();
+            $maxPrice = new Input($_POST["max_price"]);
+            $maxPrice->Sanitize();
+            $state = new Input($_POST["state"]);
+            $state->Sanitize();
+            $commune = new Input($_POST["commune"]);
+            $commune->Sanitize();
+            $firstName = new Input($_POST["first_name"]);
+            $firstName->Sanitize();
+            $lastName = new Input($_POST["last_name"]);
+            $lastName->Sanitize();
+
+            // ensure a valid price format
+            if(!preg_match("/^([1-9][0-9]+|)$/", $maxPrice->value)){
+                $responseArray["error"] .= "Veuillez spécifier un prix valide<br>";
+            }
+
+            // the rating direction won't be set unless the user chose one (default is DESC)
+            $ratingDirection = new Input("DESC");
+            if(isset($_POST["rating_direction"])){
+                $ratingDirection->value = $_POST["rating_direction"];
+                $ratingDirection->Sanitize();
+
+                // ensure a valid rating
+                if(!preg_match("/^(ASC|DESC)$/", $ratingDirection->value)){
+                    $responseArray["error"] .= "Veuillez spécifier une note valide<br>";
+                }
+            }
+
+            // the level(s) won't be set unless the user chose them (default is all levels)
+            $levels = ["primary", "middle", "high", "college"];
+            if(isset($_POST["level"])){
+                $levels = $_POST["level"];
+            }
+            foreach($levels as $level){
+                // ensure a valid level format
+                if(!preg_match("/^(primary|middle|high|college)$/", $level)){
+                    $responseArray["error"].= "Veuillez choisir un(des) palier(s) valide(s)<br>";
+                    break;
+                }
+
+                // add the level to the query parameters
+                array_push($queryParams, $level);
+            }
+
+            // retrieve offers only if the inputs are valid
+            if($responseArray["error"] === ""){
+                // this is to select all offers
+                $query = "SELECT DISTINCT teachers.id AS teacher_id, teachers.first_name, teachers.last_name, offers.id AS offer_id, offers.state, offers.commune, offers.level, offers.subject, offers.price FROM offers INNER JOIN teachers ON teachers.id = offers.teacher_id LEFT JOIN ratings ON offers.id = ratings.offer_id WHERE status = ?";
+
+                // bind the levels parameters
+                $levelsQuestionMarks = str_repeat('?,', count($levels) - 1) . '?';
+                $query .= " AND offers.level IN ($levelsQuestionMarks)";
+
+                // bind each non-empty user input
+                if($subject->value !== ""){
+                    // filter offers by subject
+                    $query .= " AND offers.subject = ?";
+                    // add the subject to the query params
+                    array_push($queryParams, $subject->value);
+                }
+                if($maxPrice->value !== ""){
+                    // filter offers by price
+                    $query .= " AND offers.price <= ?";
+                    // add the price to the query params
+                    array_push($queryParams, $maxPrice->value);
+                } 
+                if($state->value){
+                    // filter offers by state
+                    $query .= " AND offers.state = ?";
+                    // add the state to the query params
+                    array_push($queryParams, $state->value);
+                } 
+                if($commune->value !== ""){
+                    // filter offers by commune
+                    $query .= " AND offers.commune = ?";
+                    // add the commune to the query params
+                    array_push($queryParams, $commune->value);
+                }
+                if($firstName->value !== ""){
+                    // filter offers by teacher's first name
+                    $query .= " AND teachers.first_name = ?";
+                    // add the teacher's first name to the query params
+                    array_push($queryParams, $firstName->value);
+                }
+                if($lastName->value !== ""){
+                    // filter offers by teacher's last name
+                    $query .= " AND teachers.last_name = ?";
+                    // add the teacher's last name to the query params
+                    array_push($queryParams, $lastName->value);
+                }
+
+                // order by the average rating
+                $query .= "ORDER BY IFNULL((SELECT AVG(rating) FROM ratings WHERE offer_id = offers.id), 0) " . $ratingDirection->value;
+
+                // display the offers
+                $responseArray = $this->DisplayOffers($query, $queryParams, "return");
+                $responseArray["error"] = "";
             }
         }
 
