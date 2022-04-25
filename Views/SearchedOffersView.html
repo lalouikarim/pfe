@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css">
+    <link href='../Libraries/StarRatingLib/dist/themes/fontawesome-stars.css' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" 
+    integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" 
+    crossorigin="anonymous">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+    <link rel='stylesheet' href='../Styles/MainStyles.css'>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+    <script src="../Libraries/StarRatingLib/dist/jquery.barrating.min.js" type="text/javascript"></script>
+    <script src="../Scripts/MainScripts.js"></script>
+    <title>Annonce Cherchées</title>
+    <script>
+        window.onload = function(){
+            var dataString = "&action=searchoffers";
+            dataString += "&" + window.location.search.substr(1);
+            $.ajax({
+                type: "POST",
+                url: "../Controllers/UserController.php",
+                data: dataString,
+                success: function (data) {
+                    data = JSON.parse(data);
+                    
+                    $("#navbar").html(data["navbar"]);
+                    $("#footer").html(data["footer"]);
+
+                    if(data["error"] != ""){
+                      $("#offers_cards").html(data["error"]);
+                    } else{
+                      $("#offers_cards").html(data["offers_html"]);
+                      DisplayAverageRating(data["avg_ratings"]);
+                      RateOffers();
+                      DisplayUserRating(data["user_ratings"]);
+                    }
+                }
+            });
+        };
+    </script>
+</head>
+<body>
+    <div class="container-full overlay" id="container">
+        <!--navbar-->
+        <nav class="navbar navbar-expand-md navbar-dark" style="background: -webkit-linear-gradient(left, #3931af, #00c6ff);" id="navbar"></nav> 
+        <div class="container main-page">
+          <!--row4-->
+          <hr>
+          <div class="title-block">
+            <h4 class="titles" id="view_offers_section">Annonces disponibles</h4>           
+          </div>
+          <br>
+          <div class="container offers">
+            <div class="cards">   
+              <div class="offer-cards" id="offers_cards"></div>
+            </div>  
+          </div>
+          <br><br><hr>
+          <div class="title-block">
+            <h4 class="titles" id="search_offers_section">Chercher Annonce</h4>           
+          </div>
+          <br>
+          <div class="container offers">
+            <div>
+              <form method="get">
+                <div class="row">
+                  <div class="col-sm-2">
+                    <h4>Séance</h4>
+                    <div class="">
+                      <p>Matière</p>
+                      <input type="text" class="form-control" name="subject" style="width:150px;margin:10px">
+                      <p>Prix Max</p>
+                      <input type="number" class="form-control" min="0" max="50000" name="max_price" style="width:150px;margin:10px">
+                    </div>
+                    <br>
+                  </div>
+                  <div class="col-sm-2">
+                    <h4>Lieu</h4>
+                      <div class="">
+                        <p>Wilaya</p>
+                        <input type="text" class="form-control" id="sel1 age" style="width:150px;margin:10px" name='state'>
+                      </div>
+                      <div class="">
+                        <p>Commune</p>
+                        <input type="text" class="form-control" id="sel1 age" style="width:150px;margin:10px" name='commune'>
+                      </div>
+                      <br>
+                  </div>    
+                  <div class="col-sm-2">
+                    <h4>Enseignant</h4>
+                      <div class="">
+                        <p>Nom</p>
+                        <input type="text" class="form-control" id="sel1 age" style="width:150px;margin:10px" name='last_name'>
+                      </div>
+                      <div class="">
+                        <p>Prénom</p>
+                        <input type="text" class="form-control" id="sel1 age" style="width:150px;margin:10px" name='first_name'>
+                      </div>
+                      <br>
+                  </div>  
+                  <div class="col-sm-2">
+                    <h4>Palier</h4>
+                    <div class="filter-option-1">
+                      <label class="form-check-label">
+                        <input type="checkbox" class="form-check-input" value="primary" name="level[]">Primaire
+                      </label>
+                    </div>
+                    <br>
+                    <div class="filter-option-1">
+                      <label class="form-check-label">
+                        <input type="checkbox" class="form-check-input" value="middle" name="level[]">Moyenne
+                      </label>
+                    </div>
+                    <br>
+                    <div class="filter-option-1">
+                      <label class="form-check-label">
+                        <input type="checkbox" class="form-check-input" value="high" name="level[]">Secondaire
+                      </label>
+                    </div>
+                    <br>
+                    <div class="filter-option-1">
+                      <label class="form-check-label">
+                        <input type="checkbox" class="form-check-input" value="college" name="level[]">Universitaire
+                      </label>
+                    </div>
+                    <br>
+                  </div>
+                  <div class="col-sm-2">
+                    <h4>Notes</h4>
+                    <div class="filter-option-1">
+                      <label class="form-check-label">
+                        <input type="radio" class="form-check-input" value="DESC" name="rating_direction"><b>Mieux</b> notées en premier
+                      </label>
+                    </div>
+                    <br><br><br>
+                    <div class="filter-option-1">
+                      <label class="form-check-label">
+                        <input type="radio" class="form-check-input" value="ASC" name="rating_direction"><b>Moins</b> notées en premier
+                      </label>
+                    </div>
+                    <br>
+                  </div>                
+                  <button type="submit" class="btn btn-primary btn-block" type="submit">Chercher</button>
+                </div>
+              </form>
+            </div>
+          </div>
+          <br><br>
+          <br>
+        </div>
+          <!--footer-->
+        <div class="container-full footer" id="footer"></div>
+    </div>
+</body>
+</body>
+</html>
