@@ -44,10 +44,105 @@
         <nav class="navbar navbar-expand-md navbar-dark" style="background: -webkit-linear-gradient(left, #3931af, #00c6ff);" id="navbar"></nav> 
         <div class="container main-page">
           <!--row4-->
+          <hr>
+          <div class="title-block">
+            <h4 class="titles" id="view_offers_section">Annonces disponibles</h4>           
+          </div>
+          <br>
           <div class="container offers">
             <div class="cards">   
               <div class="offer-cards" id="offers_cards"></div>
             </div>  
+          </div>
+          <br><br><hr>
+          <div class="title-block">
+            <h4 class="titles" id="search_offers_section">Chercher Annonce</h4>           
+          </div>
+          <br>
+          <div class="container offers">
+            <div>
+              <form action="Views/SearchedOffersView.html" method="get">
+                <div class="row">
+                  <div class="col-sm-2">
+                    <h4>Séance</h4>
+                    <div class="">
+                      <p>Matière</p>
+                      <input type="text" class="form-control" name="subject" style="width:150px;margin:10px">
+                      <p>Prix Max</p>
+                      <input type="number" class="form-control" min="0" max="50000" name="max_price" style="width:150px;margin:10px">
+                    </div>
+                    <br>
+                  </div>
+                  <div class="col-sm-2">
+                    <h4>Lieu</h4>
+                      <div class="">
+                        <p>Wilaya</p>
+                        <input type="text" class="form-control" id="sel1 age" style="width:150px;margin:10px" name='state'>
+                      </div>
+                      <div class="">
+                        <p>Commune</p>
+                        <input type="text" class="form-control" id="sel1 age" style="width:150px;margin:10px" name='commune'>
+                      </div>
+                      <br>
+                  </div>    
+                  <div class="col-sm-2">
+                    <h4>Enseignant</h4>
+                      <div class="">
+                        <p>Nom</p>
+                        <input type="text" class="form-control" id="sel1 age" style="width:150px;margin:10px" name='last_name'>
+                      </div>
+                      <div class="">
+                        <p>Prénom</p>
+                        <input type="text" class="form-control" id="sel1 age" style="width:150px;margin:10px" name='first_name'>
+                      </div>
+                      <br>
+                  </div>  
+                  <div class="col-sm-2">
+                    <h4>Palier</h4>
+                    <div class="filter-option-1">
+                      <label class="form-check-label">
+                        <input type="checkbox" class="form-check-input" value="primary" name="level[]">Primaire
+                      </label>
+                    </div>
+                    <br>
+                    <div class="filter-option-1">
+                      <label class="form-check-label">
+                        <input type="checkbox" class="form-check-input" value="middle" name="level[]">Moyenne
+                      </label>
+                    </div>
+                    <br>
+                    <div class="filter-option-1">
+                      <label class="form-check-label">
+                        <input type="checkbox" class="form-check-input" value="high" name="level[]">Secondaire
+                      </label>
+                    </div>
+                    <br>
+                    <div class="filter-option-1">
+                      <label class="form-check-label">
+                        <input type="checkbox" class="form-check-input" value="college" name="level[]">Universitaire
+                      </label>
+                    </div>
+                    <br>
+                  </div>
+                  <div class="col-sm-2">
+                    <h4>Notes</h4>
+                    <div class="filter-option-1">
+                      <label class="form-check-label">
+                        <input type="radio" class="form-check-input" value="DESC" name="rating_direction"><b>Mieux</b> notées en premier
+                      </label>
+                    </div>
+                    <br><br><br>
+                    <div class="filter-option-1">
+                      <label class="form-check-label">
+                        <input type="radio" class="form-check-input" value="ASC" name="rating_direction"><b>Moins</b> notées en premier
+                      </label>
+                    </div>
+                    <br>
+                  </div>                
+                  <button type="submit" class="btn btn-primary btn-block" type="submit">Chercher</button>
+                </div>
+              </form>
+            </div>
           </div>
           <br><br>
           <br>
