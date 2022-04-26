@@ -12,7 +12,7 @@ class UserController{
     public function performAction($action){
         switch($action){
             case "displayhomepage":
-                $this->DisplayOffers("all", "params", "echo");
+                $this->DisplayOffers("all", "params", "echo", "");
                 break;
             case "displayteacherdetailspopup":
                 $this->DisplayTeacherDetails();
@@ -29,10 +29,10 @@ class UserController{
     }
 
     // display navbar
-    private function DisplayNavbar(){
+    private function DisplayNavbar($dir){
         $navbar = "
         <!-- Brand -->
-        <a class='navbar-brand' href='index.html'>Cours Particuliers</a>
+        <a class='navbar-brand' href='" . $dir . "index.html'>Cours Particuliers</a>
         <!-- Toggler/collapsibe Button -->
         <button class='navbar-toggler' type='button' data-toggle='collapse' data-target='#collapsibleNavbar'>
             <span class='navbar-toggler-icon'></span>
@@ -45,10 +45,10 @@ class UserController{
             if(!$this->userModel->auth->isLoggedIn()){
                 $navbar .= "
                 <li class='nav-item'>
-                    <a class='nav-link' href='Views/SignInView.html'>Se Connecter</a>
+                    <a class='nav-link' href='" . $dir . "Views/SignInView.html'>Se Connecter</a>
                 </li>
                 <li class='nav-item'>
-                    <a class='nav-link' href='Views/SignUpView.html'>S'inscrire</a>
+                    <a class='nav-link' href='" . $dir . "Views/SignUpView.html'>S'inscrire</a>
                 </li>";
             }
 
@@ -64,7 +64,7 @@ class UserController{
             if($this->userModel->auth->isLoggedIn()){
                 $navbar .= "
                 <li class='nav-item '>
-                    <a class='nav-link' onclick='LogOut()'>Se déconnecter <i class='fas fa-sign-out-alt'></i> </a>
+                    <a class='nav-link' onclick=" . '"' . "LogOut('" . $dir . "')" . '"' . ">Se déconnecter <i class='fas fa-sign-out-alt'></i> </a>
                 </li>";  
             }
             $navbar .= "
@@ -109,7 +109,7 @@ class UserController{
     }
 
     // display offers
-    private function DisplayOffers($query, $queryParams, $returnOrEcho){
+    private function DisplayOffers($query, $queryParams, $returnOrEcho, $dir){
         // send this array to the client
         $responseArray = [];
         // this array holds the average rating of each offer
@@ -167,7 +167,7 @@ class UserController{
                 $responseArray["offers_html"] .= "
                         <div class='card offer-card' style='width:250px' onmouseover='showbtn( " . $offer["offer_id"] . ")' onmouseout='hidebtn( " . $offer["offer_id"] . ")'>
                             <div class='d-none d-lg-block' id='btn-card-" . $offer["offer_id"] . "'>
-                                <button class='btn-offer btn-offer-details btn btn-block btn-primary btn-sm' id='show_teacher_details_popup_" . $offer["offer_id"] . "' onclick='DisplayTeacherDetailsPopup(" . $offer["offer_id"] . ")'>Détails du prof</button>
+                                <button class='btn-offer btn-offer-details btn btn-block btn-primary btn-sm' id='show_teacher_details_popup_" . $offer["offer_id"] . "' onclick=" . '"' . "DisplayTeacherDetailsPopup(" . $offer["offer_id"] . ", '" . $dir . "')" . '"' . ">Détails du prof</button>
                             </div>
                             <div class='card-body'>";
                 if($offer["level"] === "primary"){
@@ -277,7 +277,7 @@ class UserController{
         }
 
         // display the navbar and the footer
-        $responseArray["navbar"] = $this->DisplayNavbar();
+        $responseArray["navbar"] = $this->DisplayNavbar($dir);
         $responseArray["footer"] = $this->DisplayFooter();
 
         // assign the ratings arrays
@@ -296,15 +296,22 @@ class UserController{
     private function DisplayTeacherDetails(){
         $responseArray["logged_in"] = false;
         $responseArray["error"] = "";
-        if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["offer_id"])){
+        if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["offer_id"]) && isset($_POST["dir"])){
             // sanitize the user's input
             $offerId = new Input($_POST["offer_id"]);
             $offerId->Sanitize();
+            $dir = new Input($_POST["dir"]);
+            $dir->Sanitize();
 
             // ensure a valid id format
             if(!preg_match("/^(0|[1-9][0-9]*)$/", $offerId->value)){
                 $responseArray["error"] = "Invalid input";
-            } else{
+            } 
+            // ensure a valid dir 
+            else if(!preg_match("/^(|\.\.\/)$/", $dir->value)){
+                $responseArray["error"] = "Invalid input";
+            }
+            else{
                 if($this->userModel->auth->isLoggedIn()){
                     // indicate that the user is logged in
                     $responseArray["logged_in"] = true;
@@ -320,7 +327,7 @@ class UserController{
                         <p>" . $teacherDetails[0]["email"] . "</p>
                         <p>" . $teacherDetails[0]["phone"] . "</p>
                         <p><a href='" . $teacherDetails[0]["cv_link"] . "' target='_blank'>Cliquez ici pour voir le cv</a></p>
-                        <img src='Images/Teachers/" . md5($teacherDetails[0]["teacher_photo"]) . ".jpeg' alt='Teacher Photo' style='height:200px; width:300px;'>";
+                        <img src='" . $dir->value . "Images/Teachers/" . md5($teacherDetails[0]["teacher_photo"]) . ".jpeg' alt='Teacher Photo' style='height:200px; width:300px;'>";
                     }
                 }
             }
@@ -494,7 +501,7 @@ class UserController{
                 $query .= "ORDER BY IFNULL((SELECT AVG(rating) FROM ratings WHERE offer_id = offers.id), 0) " . $ratingDirection->value;
 
                 // display the offers
-                $responseArray = $this->DisplayOffers($query, $queryParams, "return");
+                $responseArray = $this->DisplayOffers($query, $queryParams, "return", "../");
                 $responseArray["error"] = "";
             }
         }

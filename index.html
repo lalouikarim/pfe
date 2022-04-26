@@ -30,7 +30,7 @@
                     $("#offers_cards").html(data["offers_html"]);
                     $("#footer").html(data["footer"]);
                     DisplayAverageRating(data["avg_ratings"]);
-                    RateOffers();
+                    RateOffers('');
                     DisplayUserRating(data["user_ratings"]);
                 }
             });

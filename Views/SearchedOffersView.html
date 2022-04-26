@@ -38,7 +38,7 @@
                     } else{
                       $("#offers_cards").html(data["offers_html"]);
                       DisplayAverageRating(data["avg_ratings"]);
-                      RateOffers();
+                      RateOffers("../");
                       DisplayUserRating(data["user_ratings"]);
                     }
                 }

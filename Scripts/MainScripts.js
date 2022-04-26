@@ -1,8 +1,8 @@
-function LogOut(){
+function LogOut(dir){
     var dataString = "&action=logout";
     $.ajax({
         type: "POST",
-        url: "Controllers/AccountController.php",
+        url: dir + "Controllers/AccountController.php",
         data: dataString,
         success: function (data) {
             window.location.replace("");
@@ -77,16 +77,16 @@ function hidepopup(params) {
     popup.style.transform = 'translate(-50%, -50%) scale(0)';
 }
 
-function DisplayTeacherDetailsPopup(offerId){
-    var dataString = "&action=displayteacherdetailspopup&offer_id=" + offerId;
+function DisplayTeacherDetailsPopup(offerId, dir){
+    var dataString = "&action=displayteacherdetailspopup&offer_id=" + offerId + "&dir="+dir;
     $.ajax({
         type: "POST",
-        url: "Controllers/UserController.php",
+        url: dir + "Controllers/UserController.php",
         data: dataString,
         success: function (data) {
             data = JSON.parse(data);
             if(data["logged_in"] === false){
-                window.open('Views/SignInView.html?req=viewteacher', '_blank', 'width=1000, height=400, top=200, left=300');
+                window.open(dir + 'Views/SignInView.html?req=viewteacher', '_blank', 'width=1000, height=400, top=200, left=300');
             } else if(data["error"] != ""){
                 alert(data["error"]);
             } else{
@@ -115,7 +115,7 @@ function DisplayUserRating(userRatings){
     });
 }
 
-function RateOffers(){
+function RateOffers(dir){
     $(".user-rating").each(function(index, element){
         var id = this.id;
         $("#" + id).barrating({
@@ -125,7 +125,7 @@ function RateOffers(){
                     var offerId = id.split('_')[3];
                     var dataString = "&action=rateoffer&offer_id=" + offerId + "&offer_rating=" + value;
                     $.ajax({
-                        url:"Controllers/UserController.php",
+                        url: dir + "Controllers/UserController.php",
                         type: 'post',
                         data: dataString,
                         success: function(data){
@@ -135,7 +135,7 @@ function RateOffers(){
                                 alert(data["error"]);
                             } else if(data["logged_in"] === false){
                                 $('#user_offer_rating_' + offerId).barrating('set', 0);
-                                window.open('Views/SignInView.html?req=rateoffer', '_blank', 'width=1000, height=400, top=200, left=300');
+                                window.open(dir + 'Views/SignInView.html?req=rateoffer', '_blank', 'width=1000, height=400, top=200, left=300');
                             } else{
                                 $("#offer_rating_" + offerId).barrating('set', Math.floor(data["avg_rating"]));
                                 $("#offer_rates_number_" + offerId).html(data["rates_number"]);
