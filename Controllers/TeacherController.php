@@ -286,7 +286,7 @@ class TeacherController{
                                         <form class='btn btn-success' id='display_modify_offer_popup_" . $offer["id"] . "_form'>
                                             <button class='btn btn-success' onclick='DisplayModifyOfferPopup(" . $offer["id"] . ")'>Modifier</button>
                                         </form>
-                                        <div class='popup-hide' id='modify_offer_popup_" . $offer["id"] . "'> 
+                                        <div class='modify-offer-hide' id='modify_offer_popup_" . $offer["id"] . "'> 
                                             <button class='btn btn-primary' id='modify_offer_hidepopup_" . $offer["id"] . "' onclick=" . '"' . "hidepopup('modify_offer_popup_" . $offer["id"] . "')" . '"' . ">&times;</button>
                                             <br><label class='form-label'>Modifier <button class='btn btn-link' onclick='RedirectTeacherToOffer(" . $offer["id"] . ")'> l'annonce N° " . $offer["id"] . "</button></label>
                                             <form id='modify_offer_" . $offer["id"] . "_form'>
